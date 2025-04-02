@@ -5,35 +5,346 @@ import axios from 'axios';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrag, useDrop } from 'react-dnd';
+import './GamePlay.css'; // Make sure to create this CSS file
 
-// Draggable Player Item component
-const PlayerItem = ({ player, index, movePlayer }) => {
+// Draggable player name component
+const DraggablePlayer = ({ player, currentPosition }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'player',
-    item: { index },
+    item: { 
+      id: player.id, 
+      username: player.username, 
+      currentPosition // Track current position for drag operations
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
-  const [, drop] = useDrop({
+  return (
+    <div 
+      ref={drag} 
+      className={`player-card ${isDragging ? 'player-dragging' : currentPosition ? 'player-positioned' : 'player-available'}`}
+    >
+      <div className="player-info">
+        <div>
+          <p className="player-name">{player.username}</p>
+          {currentPosition && <span className="player-position">Position: {currentPosition}</span>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Position card that accepts player drops
+const PositionCard = ({ position, assignedPlayer, onDrop, onRemovePlayer }) => {
+  const [{ isOver }, drop] = useDrop({
     accept: 'player',
-    hover: (draggedItem) => {
-      if (draggedItem.index !== index) {
-        movePlayer(draggedItem.index, index);
-        draggedItem.index = index;
-      }
-    },
+    drop: (item) => onDrop(item, position),
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
   });
 
+  // Handle removing player from position
+  const handleRemoveClick = () => {
+    if (assignedPlayer) {
+      onRemovePlayer(position);
+    }
+  };
+
   return (
-    <div
-      ref={(node) => drag(drop(node))}
-      className={`player-item ${isDragging ? 'dragging' : ''}`}
-      style={{ opacity: isDragging ? 0.5 : 1 }}
+    <div 
+      ref={drop} 
+      className={`position-card ${
+        isOver ? 'position-hover' : assignedPlayer ? 'position-filled' : 'position-empty'
+      }`}
     >
-      <span className="player-rank">{index + 1}</span>
-      <span className="player-name">{player.username}</span>
+      <div className="position-info">
+        <div className="position-number">{position}</div>
+        {assignedPlayer ? (
+          <>
+            <div className="position-player-name">{assignedPlayer.username}</div>
+            <button 
+              className="remove-player-btn" 
+              onClick={handleRemoveClick} 
+              title="Remove player from position"
+            >
+              ×
+            </button>
+          </>
+        ) : (
+          <div className="position-placeholder">Drop player here</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const RankingContainer = ({ players, onRankingChange }) => {
+  const [rankings, setRankings] = useState({});
+  const [playerPositions, setPlayerPositions] = useState({});
+  const [totalPositions, setTotalPositions] = useState(players.length);
+  
+  // Update total positions if players array changes
+  useEffect(() => {
+    // Only update if the player count changes and is greater than current total
+    if (players.length > totalPositions) {
+      setTotalPositions(players.length);
+    }
+  }, [players.length, totalPositions]);
+  
+  // Create the positions array based on totalPositions
+  const positions = Array.from({ length: totalPositions }, (_, i) => i + 1);
+  
+  // Get the current position of a player
+  const getPlayerPosition = (playerId) => {
+    return playerPositions[playerId] || null;
+  };
+
+  // Convert rankings to the ordered list and notify parent
+  const updateParentComponent = useCallback((updatedRankings) => {
+    // Important: Use the fixed positions array, not derived from rankings
+    const orderedPlayers = positions
+      .filter(pos => updatedRankings[pos])
+      .map(pos => {
+        const playerId = updatedRankings[pos];
+        return players.find(p => p.id === playerId);
+      })
+      .filter(Boolean);
+    
+    console.log("Ordered players after update:", orderedPlayers);
+    onRankingChange(orderedPlayers);
+  }, [positions, players, onRankingChange]);
+
+  // Handle dropping a player on a position
+  const handleDrop = useCallback((player, position) => {
+    if (position > totalPositions) return;
+    console.log("Dropping player:", player, "at position:", position);
+    
+    setRankings(prevRankings => {
+      // Create copies of state to modify
+      let updatedRankings = { ...prevRankings };
+      
+      // If this position already has a player, remove that association
+      if (updatedRankings[position]) {
+        const currentPlayerId = updatedRankings[position];
+        
+        // Also update playerPositions in the next setState call
+        setPlayerPositions(prevPositions => {
+          const updatedPositions = { ...prevPositions };
+          delete updatedPositions[currentPlayerId];
+          return updatedPositions;
+        });
+      }
+      
+      // If player is already in another position, remove from there
+      if (player.currentPosition) {
+        delete updatedRankings[player.currentPosition];
+      }
+      
+      // Assign the player to the new position
+      updatedRankings[position] = player.id;
+      
+      // Also update playerPositions in a separate setState call
+      setPlayerPositions(prevPositions => {
+        const updatedPositions = { ...prevPositions };
+        updatedPositions[player.id] = position;
+        return updatedPositions;
+      });
+      
+      // Return the updated rankings for this setState call
+      return updatedRankings;
+    });
+    
+    // Use setTimeout to ensure the state updates have processed before notifying parent
+    setTimeout(() => {
+      updateParentComponent({ ...rankings, [position]: player.id });
+    }, 0);
+  }, [totalPositions, rankings, updateParentComponent]);
+  
+  // Handle removing a player from a position
+  const handleRemovePlayer = useCallback((position) => {
+    const playerId = rankings[position];
+    if (!playerId) return;
+    
+    setRankings(prevRankings => {
+      // Create a copy to modify
+      let updatedRankings = { ...prevRankings };
+      // Remove the position association
+      delete updatedRankings[position];
+      return updatedRankings;
+    });
+    
+    setPlayerPositions(prevPositions => {
+      // Create a copy to modify
+      let updatedPositions = { ...prevPositions };
+      // Remove the player's position
+      delete updatedPositions[playerId];
+      return updatedPositions;
+    });
+    
+    // Notify parent after a small delay to ensure state is updated
+    setTimeout(() => {
+      const updatedRankings = { ...rankings };
+      delete updatedRankings[position];
+      updateParentComponent(updatedRankings);
+    }, 0);
+  }, [rankings, updateParentComponent]);
+  
+  // Get the player object assigned to a position
+  const getPlayerForPosition = useCallback((position) => {
+    const playerId = rankings[position];
+    if (!playerId) return null;
+    return players.find(p => p.id === playerId);
+  }, [rankings, players]);
+
+  // Group players into positioned and unpositioned
+  const positionedPlayerIds = Object.values(rankings);
+  const unpositionedPlayers = players.filter(player => !positionedPlayerIds.includes(player.id));
+
+  // Debug logging for state tracking
+  // useEffect(() => {
+  //   console.log("Rankings updated:", rankings);
+  //   console.log("Player positions updated:", playerPositions);
+  //   console.log("Positioned player IDs:", positionedPlayerIds);
+  //   console.log("Unpositioned players:", unpositionedPlayers);
+  // }, [rankings, playerPositions, positionedPlayerIds, unpositionedPlayers]);
+
+  return (
+    <div className="ranking-container">
+      {/* Left side: Position cards */}
+      <div className="ranking-positions">
+        <h3 className="section-title">Rankings</h3>
+        {positions.map(position => (
+          <PositionCard 
+            key={position} 
+            position={position} 
+            assignedPlayer={getPlayerForPosition(position)}
+            onDrop={handleDrop}
+            onRemovePlayer={handleRemovePlayer}
+          />
+        ))}
+      </div>
+      {/* Right side: Available players */}
+      <div className="ranking-players">
+        <h3 className="section-title">Available Players</h3>
+        
+        {unpositionedPlayers.length > 0 ? (
+          unpositionedPlayers.map(player => (
+            <DraggablePlayer 
+              key={player.id} 
+              player={player}
+              currentPosition={getPlayerPosition(player.id)}
+            />
+          ))
+        ) : (
+          <div className="empty-players-message">All players have been positioned</div>
+        )}
+        
+        {/* Show positioned players separately for easy access */}
+        {positionedPlayerIds.length > 0 && (
+          <div className="positioned-players-section">
+            <h3 className="section-title">Positioned Players</h3>
+            <p className="hint-text">You can drag these to other positions</p>
+            {players
+              .filter(p => positionedPlayerIds.includes(p.id))
+              .map(player => (
+                <DraggablePlayer 
+                  key={player.id} 
+                  player={player}
+                  currentPosition={getPlayerPosition(player.id)}
+                />
+              ))
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Timer component
+const Timer = ({ timeLeft }) => {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  
+  return (
+    <div className="timer-container">
+      <div className={`timer-display ${timeLeft < 30 ? 'timer-warning' : ''}`}>
+        {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+      </div>
+      <p className="timer-label">Time Remaining</p>
+    </div>
+  );
+};
+
+// Status Banner component
+const StatusBanner = ({ roundStatus, isWolf }) => {
+  let message = "";
+  let bannerClass = "status-banner status-info";
+
+  switch (roundStatus) {
+    case 'waiting':
+      message = "Waiting for the host to start the round";
+      break;
+    case 'wolf_ranking':
+      message = isWolf ? "You are the wolf! Rank the players" : "Waiting for the wolf to rank players";
+      bannerClass = isWolf ? "status-banner status-danger" : "status-banner status-warning";
+      break;
+    case 'pack_ranking':
+      message = "The pack is now ranking players";
+      bannerClass = "status-banner status-success";
+      break;
+    case 'results':
+      message = "Round results";
+      bannerClass = "status-banner status-purple";
+      break;
+    default:
+      message = "Waiting...";
+  }
+
+  return (
+    <div className={bannerClass}>
+      {message}
+    </div>
+  );
+};
+
+// Results component
+const ResultsDisplay = ({ wolfRanking, packRanking, packScore, question }) => {
+  console.log("Results Display:", { wolfRanking, packRanking, packScore, question });
+  return (
+    <div className="results-container">
+      <h3 className="results-title">Round Results</h3>
+      <p className="results-question">Question: {question}</p>
+      
+      <div className="results-columns">
+        <div className="results-column">
+          <h4 className="wolf-ranking-title">Wolf's Ranking</h4>
+          <ol className="ranking-list">
+            {wolfRanking.map((player, idx) => (
+              <li key={player.id} className="ranking-item">{player.username}</li>
+            ))}
+          </ol>
+        </div>
+        
+        <div className="results-column">
+          <h4 className="pack-ranking-title">Pack's Ranking</h4>
+          <ol className="ranking-list">
+            {packRanking.map((player, idx) => (
+              <li key={player.id} className="ranking-item">{player.username}</li>
+            ))}
+          </ol>
+        </div>
+      </div>
+      
+      <div className="score-container">
+        <p className="score-value">Pack Score: <span className="score-number">{packScore}</span></p>
+        <p className="score-explanation">
+          (Points awarded to each pack member)
+        </p>
+      </div>
     </div>
   );
 };
@@ -42,7 +353,7 @@ const PlayerItem = ({ player, index, movePlayer }) => {
 function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const { roomCode } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState('');
   const [wsConnected, setWsConnected] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -52,7 +363,6 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const [currentRound, setCurrentRound] = useState(1);
   const [totalRounds, setTotalRounds] = useState(3);
   const [players, setPlayers] = useState([]);
-  const [rankablePlayers, setRankablePlayers] = useState([]);
   const [isWolf, setIsWolf] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isPackRanker, setIsPackRanker] = useState(false);
@@ -63,6 +373,7 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const [wolfRanking, setWolfRanking] = useState([]);
   const [packRanking, setPackRanking] = useState([]);
   const [roundResults, setRoundResults] = useState(null);
+  const [rankablePlayers, setRankablePlayers] = useState([]);
   
   const socketRef = useRef(null);
   const timerRef = useRef(null);
@@ -75,13 +386,16 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const connectWebSocket = useCallback(() => {
     if (!roomCode || !user?.username) return;
     
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      return;
+    }
+
     const token = localStorage.getItem('access_token');
     const wsURL = `ws://localhost:8000/ws/game/${roomCode}/?token=${token}`;
     
     // Clean up any existing connection
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.close();
-      return;
     }
     
     const socket = new WebSocket(wsURL);
@@ -92,12 +406,6 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
       setWsConnected(true);
       reconnectAttemptsRef.current = 0;
       setMessages(prev => [...prev, { type: 'system', content: 'Connected to game' }]);
-      
-      // Send player_connected message when connection is established
-      socket.send(JSON.stringify({ 
-        type: 'player_connected', 
-        player: user.username 
-      }));
     };
 
     socket.onmessage = (event) => {
@@ -106,20 +414,20 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
         console.log('GamePlay WebSocket message received:', data);
 
         switch (data.type) {
-          case 'round_start_message':
+          case 'round_start':
             handleRoundStart(data);
             break;
-          case 'wolf_ranking_submitted':
-            handleWolfRankingSubmitted(data);
+          case 'wolf_timer':
+            handleWolfTimer(data);
             break;
-          case 'pack_ranker_selected':
-            handlePackRankerSelected(data);
-            break;
-          case 'pack_ranking_submitted':
-            handlePackRankingSubmitted(data);
+          case 'wolf_order':
+            handleWolfOrderSubmitted(data);
             break;
           case 'round_result':
             handleRoundResult(data);
+            break;
+          case 'status_change_message':
+            handleStatusChange(data);
             break;
           case 'player_list_update':
             if (data.players) {
@@ -128,6 +436,10 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
             break;
           case 'error':
             setError(data.message || 'An error occurred');
+            break;
+          // Add this to the existing switch case in the socket.onmessage handler
+          case 'game_end_message':
+            handleGameEnd(data);
             break;
           default:
             console.log('Unknown message type:', data.type);
@@ -165,208 +477,266 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
     };
   }, [roomCode, user?.username]);
 
-  // Reorder players in a ranking
-  const movePlayer = useCallback((dragIndex, hoverIndex) => {
-    setRankablePlayers(prevPlayers => {
-      const newPlayers = [...prevPlayers];
-      const draggedPlayer = newPlayers[dragIndex];
-      newPlayers.splice(dragIndex, 1);
-      newPlayers.splice(hoverIndex, 0, draggedPlayer);
-      return newPlayers;
-    });
-  }, []);
+  // Add this function to the GamePlay component
+  const handleGameEnd = (data) => {
+    console.log('Game ended:', data);
+    const { statistics } = data;
+    
+    // Navigate to results page with the game statistics
+    navigate('/results', { state: { statistics, roomCode } });
+  };
 
-  // WebSocket message handlers
-  const handleRoundStart = useCallback((data) => {
-    // Clear any existing timers
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
+  // Function to prepare rankable players list
+  const prepareRankablePlayers = (allPlayers, wolfUsername) => {
+    console.log("Preparing rankable players from:", allPlayers, "Wolf ID:", wolfUsername);
+    
+    if (!allPlayers || allPlayers.length === 0) {
+      console.warn("No players available to rank");
+      return [];
     }
     
-    setCurrentRound(data.round_number);
-    setQuestion(data.question);
-    setWolfId(data.wolf_id);
-    setIsWolf(data.wolf_id === user.username);
+    // Convert backend player format to the format needed for ranking
+    // This handles both the API format and the websocket format
+    return allPlayers
+      .map(player => ({
+        id: player.id,
+        username: player.user__username || player.username
+      }));
+  };
+
+  // Function to handle round start message
+  const handleRoundStart = (data) => {
+    console.log('Round started:', data);
+    const { round_number, wolf_id, question: newQuestion } = data;
+    
+    setCurrentRound(round_number);
+    setWolfId(wolf_id);
+    setQuestion(newQuestion);
     setRoundStatus('wolf_ranking');
-    
-    // Initialize time left for wolf's turn (2 minutes = 120 seconds)
-    setTimeLeft(120);
-    
-    // Prepare rankable players list (excluding the wolf if current user is the wolf)
-    const playersList = players.filter(p => p.username !== data.wolf_id);
-    setRankablePlayers(playersList);
-    
-    setMessages(prev => [...prev, { 
-      type: 'round_start', 
-      content: `Round ${data.round_number} started! Question: ${data.question}` 
-    }]);
+    setIsWolf(user?.username === wolf_id);
 
-    if (data.wolf_id === user.username) {
-      setMessages(prev => [...prev, { 
-        type: 'wolf_notification', 
-        content: `You are the wolf for this round! You have 2 minutes to rank the players.` 
-      }]);
-      
-      // Start the timer for wolf's turn
-      startTimer(120, () => {
-        // Auto-submit the current ranking when time runs out
-        submitWolfRanking();
-      });
-    } else {
-      setMessages(prev => [...prev, { 
-        type: 'wolf_notification', 
-        content: `${data.wolf_id} is the wolf for this round. Waiting for their ranking...` 
-      }]);
-    }
-  }, [user.username, players]);
-  
-  const handleWolfRankingSubmitted = useCallback((data) => {
-    // Clear wolf timer if it exists
+    // Set up rankable players (all players except the wolf)
+    const rankable = prepareRankablePlayers(players, wolf_id);
+    console.log("Setting rankable players:", rankable);
+    setRankablePlayers(rankable);
+
+    // Reset rankings
+    setWolfRanking([]);
+    setPackRanking([]);
+    setRoundResults(null);
+  };
+
+  // Function to handle wolf timer message
+  const handleWolfTimer = (data) => {
+    const { time } = data;
+    setTimeLeft(time);
+
+    // Clear existing timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
-    
-    setWolfRanking(data.ranking);
-    
-    setMessages(prev => [...prev, { 
-      type: 'wolf_ranking', 
-      content: `The wolf has submitted their ranking!` 
-    }]);
-    
-    // If this is from a different round or not immediate transition to pack_ranking,
-    // we'll wait for the separate pack_ranker_selected message
-    // This ensures we maintain proper flow in case messages arrive out of order
-  }, []);
-  
-  const handlePackRankerSelected = useCallback((data) => {
-    setRoundStatus('pack_ranking');
-    setPackRankerId(data.pack_ranker_id);
-    setIsPackRanker(data.pack_ranker_id === user.username);
-    
-    // Reset rankable players for pack ranker
-    const playersList = players.filter(p => p.username !== wolfId);
-    setRankablePlayers(playersList);
-    
-    if (data.pack_ranker_id === user.username) {
-      setMessages(prev => [...prev, { 
-        type: 'pack_notification', 
-        content: `You have been selected to rank for the pack! You have 2 minutes to submit your ranking.` 
-      }]);
-      
-      // Start the timer for pack ranker's turn
-      setTimeLeft(120);
-      startTimer(120, () => {
-        // Auto-submit the current ranking when time runs out
-        submitPackRanking();
-      });
-    } else {
-      setMessages(prev => [...prev, { 
-        type: 'pack_notification', 
-        content: `${data.pack_ranker_id} is ranking for the pack. Waiting for their ranking...` 
-      }]);
-    }
-  }, [user.username, players, wolfId]);
-  
-  const handlePackRankingSubmitted = useCallback((data) => {
-    // Clear pack timer if it exists
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    setPackRanking(data.ranking);
-    
-    setMessages(prev => [...prev, { 
-      type: 'pack_ranking', 
-      content: `The pack representative has submitted their ranking!` 
-    }]);
-    
-    // Results should come in a separate message, but we can transition the UI
-    // to show we're waiting for results
-    setRoundStatus('waiting_results');
-  }, []);
 
-  const handleRoundResult = useCallback((data) => {
-    setRoundResults({
-      wolfRanking: data.wolf_ranking,
-      packRanking: data.pack_ranking,
-      packScore: data.pack_score,
-      totalScore: data.total_score
-    });
-    
-    setRoundStatus('results');
-    
-    setMessages(prev => [...prev, { 
-      type: 'round_result', 
-      content: `Round ${data.round_number} results: Pack scored ${data.pack_score} points! Total score: ${data.total_score}` 
-    }]);
-    
-    // Update players with new scores
-    if (data.updated_players) {
-      setPlayers(data.updated_players);
-    }
-  }, []);
-
-  // Start a countdown timer
-  const startTimer = useCallback((seconds, onComplete) => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    setTimeLeft(seconds);
-    
+    // Start the countdown
     timerRef.current = setInterval(() => {
       setTimeLeft(prevTime => {
         if (prevTime <= 1) {
           clearInterval(timerRef.current);
-          if (onComplete) onComplete();
           return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
+  };
+
+  // Function to handle wolf order submitted message
+  const handleWolfOrderSubmitted = (data) => {
+    const { submitter } = data;
     
-    return () => clearInterval(timerRef.current);
-  }, []);
+    setPackRankerId(submitter);
+    setIsPackRanker(user?.username === submitter);
+    setRoundStatus('pack_ranking');
+    
+    // If we're not the wolf, we need to ensure the rankable players are correctly set
+    if (!isWolf) {
+      const rankable = prepareRankablePlayers(players, wolfId);
+      console.log("Refreshing rankable players for pack ranking:", rankable);
+      setRankablePlayers(rankable);
+    }
 
-  // Setup and cleanup
+    // Clear timer if it's running
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      setTimeLeft(0);
+    }
+  };
+
+  // Function to handle round result message
+  const handleRoundResult = (data) => {
+    const { wolf_order, pack_order, pack_score } = data;
+    
+    // Store the original orders for reference
+    setWolfRanking(wolf_order);
+    setPackRanking(pack_order);
+
+    // Create player arrays from the orders for display
+    const wolfRankingArray = Object.entries(wolf_order)
+      .map(([playerId, username]) => ({
+        id: parseInt(playerId),
+        username: username
+      }));
+    
+    const packRankingArray = Object.entries(pack_order)
+      .map(([playerId, username]) => ({
+        id: parseInt(playerId),
+        username: username
+      }));
+    
+    setRoundResults({
+      wolfRanking: wolfRankingArray,
+      packRanking: packRankingArray,
+      packScore: pack_score
+    });
+    
+    setRoundStatus('results');
+  };
+
+  // Function to handle status change message
+  const handleStatusChange = (data) => {
+    const { status } = data;
+    setRoundStatus(status);
+  };
+
+  // Function to start a new round
+  const handleStartRound = () => {
+    if (!isHost || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    
+    console.log('Starting new round...');
+    socketRef.current.send(JSON.stringify({
+      type: 'start_round',
+      round_number: currentRound
+    }));
+  };
+
+  // Function to submit wolf ranking
+  const handleSubmitWolfRanking = () => {
+    if (!isWolf || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    
+    console.log("Submitting wolf ranking for players:", rankablePlayers);
+    
+    // Convert the array of ranked players to the format expected by the backend
+    const order = {};
+    rankablePlayers.forEach((player, index) => {
+      order[player.id] = index + 1;
+    });
+    
+    socketRef.current.send(JSON.stringify({
+      type: 'wolf_order',
+      order: order,
+      round_number: currentRound
+    }));
+  };
+
+  // Function to submit pack ranking
+  const handleSubmitPackRanking = () => {
+    if (!isPackRanker || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    
+    console.log("Submitting pack ranking for players:", rankablePlayers);
+    
+    // Convert the array of ranked players to the format expected by the backend
+    const order = {};
+    rankablePlayers.forEach((player, index) => {
+      order[player.id] = index + 1;
+    });
+    
+    socketRef.current.send(JSON.stringify({
+      type: 'pack_order',
+      order: order,
+      round_number: currentRound
+    }));
+  };
+
+  // Function to end current round and prepare for next
+  const handleEndRound = () => {
+    if (!isHost || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    
+    socketRef.current.send(JSON.stringify({
+      type: 'change_status',
+      status: 'waiting',
+      round_number: currentRound + 1
+    }));
+    
+    setCurrentRound(prev => prev + 1);
+    setRoundStatus('waiting');
+    setWolfId('');
+    setPackRankerId('');
+    setQuestion('');
+    setIsWolf(false);
+    setIsPackRanker(false);
+    setRoundResults(null);
+  };
+
+  // Handle ranking changes from the RankingContainer
+  const handleRankingChange = (orderedPlayers) => {
+    console.log("Ranking changed:", orderedPlayers);
+    
+    // Get the IDs of positioned players
+    const positionedIds = orderedPlayers.map(p => p.id);
+    
+    // Start with all players that should be rankable
+    const allRankablePlayers = prepareRankablePlayers(players, wolfId);
+    
+    // Create a new ordered list that keeps unpositioned players at the end
+    const newRankablePlayers = [
+      ...orderedPlayers,
+      ...allRankablePlayers.filter(p => !positionedIds.includes(p.id))
+    ];
+    
+    // Update state with this new combined list
+    setRankablePlayers(newRankablePlayers);
+  };
+
+  const [roomInfo, setRoomInfo] = useState({});
+
+  const getRoomData = async() => {
+    try {
+      setLoading(true); // Set loading state while fetching
+      console.log("Fetching room data for room code:", roomCode);
+      const response = await axios.get(`http://localhost:8000/api/game/get-room-details/?room_code=${roomCode}`);
+      console.log("Room data received:", response.data);
+      setRoomInfo(response.data);
+      
+      // If we have current_players, process them right away
+      if (response.data.current_players && response.data.current_players.length > 0) {
+        setPlayers(response.data.current_players);
+        
+        // If we're already in a round with a wolf, set up rankable players
+        if (wolfId) {
+          const rankable = prepareRankablePlayers(response.data.current_players, wolfId);
+          console.log("Setting initial rankable players from API response:", rankable);
+          setRankablePlayers(rankable);
+        }
+      }
+      
+      setLoading(false); // End loading state
+    } catch (error) {
+      console.error('Error fetching room data:', error);
+      setError('Failed to load game data. Please try again.');
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    // Connect to WebSocket
+    // Fetch room data first
+    getRoomData();
+    
+    // Connect to WebSocket only once when component mounts
     connectWebSocket();
-
-    // Fetch initial game data
-    const fetchGameData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/game/get-game-state/?room_code=${roomCode}`);
-        
-        // Update state with data from the response
-        setPlayers(response.data.players || []);
-        setIsHost(user.username === response.data.host);
-        setTotalRounds(response.data.total_rounds || 3);
-        setCurrentRound(response.data.current_round || 1);
-        setRoundStatus(response.data.round_status || 'waiting');
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching game data:', error);
-        setError('Failed to load game data. Please refresh the page.');
-        setLoading(false);
-      }
-    };
-
-    fetchGameData();
-
-    // Ping to keep connection alive
-    const pingInterval = setInterval(() => {
-      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 30000); // Every 30 seconds
-
+    
     // Cleanup function
     return () => {
-      clearInterval(pingInterval);
+      if (socketRef.current) {
+        socketRef.current.close(1000, "Component unmounting");
+      }
       
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -375,387 +745,222 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      
-      if (socketRef.current) {
-        // Send player_disconnected message before closing
-        if (socketRef.current.readyState === WebSocket.OPEN) {
-          socketRef.current.send(JSON.stringify({ 
-            type: 'player_disconnected', 
-            player: user.username 
-          }));
-          
-          // Close with normal closure code
-          socketRef.current.close(1000);
-        }
-      }
     };
-  }, [roomCode, connectWebSocket, user.username, startTimer]);
-
-  const startRound = () => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: 'start_round',
-        round_number: currentRound
-      }));
-      
-      setMessages(prev => [...prev, { 
-        type: 'system', 
-        content: `Starting round ${currentRound}...` 
-      }]);
+  }, [connectWebSocket]); // Only depend on connectWebSocket which is memoized
+  
+  // Add a separate useEffect for handling host status updates
+  useEffect(() => {
+    if (roomInfo.host && user?.username) {
+      setIsHost(roomInfo.host === user.username);
     }
-  };
-
-  const submitWolfRanking = () => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN && isWolf) {
-      // Convert player objects to just their usernames for ranking
-      const ranking = rankablePlayers.map(player => player.username);
+  }, [roomInfo, user?.username]);
+  
+  // Add a separate useEffect for handling player updates
+  useEffect(() => {
+    if (roomInfo.current_players && roomInfo.current_players.length > 0) {
+      console.log('Current players updated:', roomInfo.current_players);
+      setPlayers(roomInfo.current_players);
       
-      socketRef.current.send(JSON.stringify({
-        type: 'wolf_ranking',
-        ranking: ranking,
-        round_number: currentRound
-      }));
-      
-      setMessages(prev => [...prev, { 
-        type: 'system', 
-        content: 'Your wolf ranking has been submitted!' 
-      }]);
-    }
-  };
-
-  const submitPackRanking = () => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN && isPackRanker) {
-      // Convert player objects to just their usernames for ranking
-      const ranking = rankablePlayers.map(player => player.username);
-      
-      socketRef.current.send(JSON.stringify({
-        type: 'pack_ranking',
-        ranking: ranking,
-        round_number: currentRound
-      }));
-      
-      setMessages(prev => [...prev, { 
-        type: 'system', 
-        content: 'Your pack ranking has been submitted!' 
-      }]);
-    }
-  };
-
-  const returnToLobby = async () => {
-    try {
-      // Close current connection
-      if (socketRef.current) {
-        socketRef.current.close(1000);
+      // If we're in wolf_ranking or pack_ranking phase, update rankable players
+      if ((roundStatus === 'wolf_ranking' || roundStatus === 'pack_ranking') && wolfId) {
+        const rankable = prepareRankablePlayers(roomInfo.current_players, wolfId);
+        console.log("Updating rankable players after player list update:", rankable);
+        setRankablePlayers(rankable);
       }
-      
-      // Navigate back to the lobby
-      navigate(`/lobby/${roomCode}`);
-    } catch (error) {
-      console.error('Error returning to lobby:', error);
-      setError('Failed to return to lobby. Please try again.');
     }
-  };
+  }, [roomInfo.current_players, roundStatus, wolfId]);
 
-  // Format time as MM:SS
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+  // Add debugging console logs for important state changes
+  useEffect(() => {
+    console.log("GamePlay component state updated:", {
+      roundStatus,
+      isWolf,
+      isPackRanker,
+      wolfId,
+      packRankerId,
+      players: players.length,
+      rankablePlayers: rankablePlayers.length
+    });
+  }, [roundStatus, isWolf, isPackRanker, wolfId, packRankerId, players, rankablePlayers]);
 
-  // Render different UI based on round status
-  const renderGameContent = () => {
-    if (loading) {
-      return <div className="loading">Loading game data...</div>;
-    }
-    
-    switch (roundStatus) {
-      case 'waiting':
-        return (
-          <div className="waiting-state">
-            <h2>Waiting for round to start...</h2>
-            {isHost && (
-              <div className="host-controls">
-                <h3>You are the host</h3>
-                <button 
-                  className="start-round-btn"
-                  onClick={startRound}
-                  disabled={!wsConnected}
-                >
-                  Start Round {currentRound}
-                </button>
-              </div>
-            )}
-            <div className="players-list">
-              <h3>Players in Game:</h3>
-              <ul>
-                {players.map((player, index) => (
-                  <li key={index}>
-                    {player.username} {player.username === user.username ? "(You)" : ""}
-                    {player.isHost ? " (Host)" : ""}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        );
-      
-      case 'wolf_ranking':
-        return (
-          <div className="wolf-ranking-state">
-            <h2>Round {currentRound} of {totalRounds}</h2>
-            <div className="question-box">
-              <h3>Question:</h3> 
-              <p>{question}</p>
-            </div>
-            
-            {isWolf ? (
-              <div className="wolf-interface">
-                <h3>You are the Wolf!</h3>
-                <div className="timer">Time remaining: {formatTime(timeLeft)}</div>
-                <p>Drag and drop players to rank them from best to worst:</p>
-                
-                <DndProvider backend={HTML5Backend}>
-                  <div className="ranking-container">
-                    {rankablePlayers.map((player, index) => (
-                      <PlayerItem 
-                        key={player.username}
-                        index={index}
-                        player={player}
-                        movePlayer={movePlayer}
-                      />
-                    ))}
-                  </div>
-                </DndProvider>
-                
-                <button 
-                  className="submit-btn"
-                  onClick={submitWolfRanking}
-                  disabled={!wsConnected}
-                >
-                  Submit Wolf Ranking
-                </button>
-              </div>
-            ) : (
-              <div className="waiting-for-wolf">
-                <h3>Waiting for the Wolf's ranking...</h3>
-                <p>The Wolf ({wolfId}) is currently ranking all players.</p>
-              </div>
-            )}
-          </div>
-        );
-      
-      case 'pack_ranking':
-        return (
-          <div className="pack-ranking-state">
-            <h2>Round {currentRound} of {totalRounds}</h2>
-            <div className="question-box">
-              <h3>Question:</h3> 
-              <p>{question}</p>
-            </div>
-            
-            {isPackRanker ? (
-              <div className="pack-interface">
-                <h3>You are ranking for the Pack!</h3>
-                <div className="timer">Time remaining: {formatTime(timeLeft)}</div>
-                <p>Try to match the Wolf's ranking - drag and drop players to rank them:</p>
-                
-                <DndProvider backend={HTML5Backend}>
-                  <div className="ranking-container">
-                    {rankablePlayers.map((player, index) => (
-                      <PlayerItem 
-                        key={player.username}
-                        index={index}
-                        player={player}
-                        movePlayer={movePlayer}
-                      />
-                    ))}
-                  </div>
-                </DndProvider>
-                
-                <button 
-                  className="submit-btn"
-                  onClick={submitPackRanking}
-                  disabled={!wsConnected}
-                >
-                  Submit Pack Ranking
-                </button>
-              </div>
-            ) : (
-              <div className="waiting-for-pack">
-                <h3>The Wolf has submitted their ranking!</h3>
-                <p>{packRankerId} is now ranking for the Pack.</p>
-              </div>
-            )}
-          </div>
-        );
-        
-      case 'waiting_results':
-        return (
-          <div className="waiting-results-state">
-            <h2>Round {currentRound} of {totalRounds}</h2>
-            <div className="results-pending">
-              <h3>Both rankings submitted!</h3>
-              <p>Calculating round results...</p>
-              <div className="loading-spinner"></div>
-            </div>
-          </div>
-        );
-      
-      case 'results':
-        return (
-          <div className="results-state">
-            <h2>Round {currentRound} Results</h2>
-            
-            <div className="results-grid">
-              <div className="wolf-results">
-                <h3>Wolf's Ranking:</h3>
-                <ol>
-                  {roundResults?.wolfRanking.map((player, index) => (
-                    <li key={index}>{player}</li>
-                  ))}
-                </ol>
-              </div>
-              
-              <div className="pack-results">
-                <h3>Pack's Ranking:</h3>
-                <ol>
-                  {roundResults?.packRanking.map((player, index) => (
-                    <li key={index}>{player}</li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-            
-            <div className="score-summary">
-              <h3>Round Score: {roundResults?.packScore} points</h3>
-              <h3>Total Score: {roundResults?.totalScore} points</h3>
-            </div>
-            
-            {isHost && currentRound < totalRounds && (
-              <button 
-                className="next-round-btn"
-                onClick={startRound}
-                disabled={!wsConnected}
-              >
-                Start Round {currentRound + 1}
-              </button>
-            )}
-            
-            {currentRound >= totalRounds && (
-              <div className="game-over">
-                <h2>Game Complete!</h2>
-                <button 
-                  className="return-lobby-btn"
-                  onClick={returnToLobby}
-                >
-                  Return to Lobby
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      
-      default:
-        return <div>Unknown round status</div>;
-    }
-  };
+  if (loading) {
+    return <div className="loading-screen">Loading game...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="error-screen">
+        <div className="error-message">{error}</div>
+        <button 
+          className="return-button"
+          onClick={() => navigate('/lobby')}
+        >
+          Return to Lobby
+        </button>
+      </div>
+    );
+  }
+
+  // If we have players but rankablePlayers is empty (and we should have some)
+  // Fix it on the fly for rendering
+  let displayRankablePlayers = rankablePlayers;
+  if ((isWolf || isPackRanker) && 
+      (roundStatus === 'wolf_ranking' || roundStatus === 'pack_ranking') && 
+      rankablePlayers.length === 0 && 
+      players.length > 0 && 
+      wolfId) {
+    displayRankablePlayers = prepareRankablePlayers(players, wolfId);
+    console.log("Creating on-the-fly rankable players for display:", displayRankablePlayers);
+  }
 
   return (
-    <div className="game-play-container">
-      <header className="game-header">
-        <div className="header-content">
-          <div className="game-info">
-            <h1>Wolf Game</h1>
-            <p>Room Code: <span className="room-code">{roomCode}</span></p>
-            <span className={`connection-status ${wsConnected ? 'connected' : 'disconnected'}`}>
-              {wsConnected ? 'Connected' : 'Disconnected'}
-            </span>
-          </div>
-          <div className="header-actions">
-            <button className="return-btn" onClick={returnToLobby}>
-              Return to Lobby
-            </button>
-            <button className="logout-btn" onClick={onLogout}>
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      
-      <main className="game-main">
-        <div className="game-container">
-          {error && (
-            <div className="error-message">
-              {error}
-              {!wsConnected && (
-                <button 
-                  className="reconnect-btn"
-                  onClick={() => {
-                    reconnectAttemptsRef.current = 0;
-                    setError('');
-                    connectWebSocket();
-                  }}
-                >
-                  Reconnect
-                </button>
-              )}
+    <DndProvider backend={HTML5Backend}>
+      <div className="game-container">
+        <div className="game-panel">
+          <div className="game-header">
+            <h1 className="room-title">Room: {roomCode}</h1>
+            <div className="header-buttons">
+              <button 
+                className="leave-button"
+                onClick={onLeaveLobby}
+              >
+                Leave Game
+              </button>
             </div>
-          )}
-          
-          <div className="game-layout">
-            {/* Left Panel - Game Content */}
-            <div className="game-content">
-              {renderGameContent()}
-            </div>
+          </div>
 
-            {/* Right Panel - Activity Feed & Players */}
-            <div className="game-sidebar">
-              {/* Players */}
-              <div className="players-panel">
-                <div className="panel-header">
-                  <h3>Players</h3>
-                </div>
-                <ul className="players-list">
-                  {players.map((player, index) => (
-                    <li key={index} className="player-item">
-                      <div className="player-info">
-                        <p className="player-name">
-                          {player.username}
-                          {player.username === user.username && " (You)"}
-                          {player.isHost && " (Host)"}
-                        </p>
-                        <p className="player-score">Score: {player.score || 0}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+          <div className="status-section">
+            <StatusBanner roundStatus={roundStatus} isWolf={isWolf} />
+            
+            {timeLeft > 0 && (
+              <Timer timeLeft={timeLeft} />
+            )}
+          </div>
+
+          {/* Round information */}
+          <div className="round-section">
+            <div className="round-info">
+              <div className="round-header">
+                <h2 className="round-title">Round {currentRound} of {totalRounds}</h2>
+                {isHost && roundStatus === 'waiting' && (
+                  <button 
+                    className="start-round-button"
+                    onClick={handleStartRound}
+                  >
+                    Start Round
+                  </button>
+                )}
+                {isHost && roundStatus === 'results' && (
+                  <button 
+                    className="next-round-button"
+                    onClick={handleEndRound}
+                  >
+                    Next Round
+                  </button>
+                )}
               </div>
               
-              {/* Activity Feed */}
-              <div className="activity-panel">
-                <div className="panel-header">
-                  <h3>Game Activity</h3>
+              {question && (
+                <div className="question-display">
+                  <h3 className="question-text">{question}</h3>
                 </div>
-                <div className="message-list">
-                  {messages.map((msg, index) => (
-                    <div 
-                      key={index}
-                      className={`message ${msg.type}`}
-                    >
-                      {msg.content}
-                    </div>
-                  ))}
-                  {messages.length === 0 && (
-                    <p className="no-messages">Waiting for game events...</p>
+              )}
+              
+              {wolfId && (
+                <div className="wolf-info">
+                  {isWolf ? (
+                    <p className="wolf-status-player">You are the wolf!</p>
+                  ) : (
+                    <p className="wolf-status">Wolf: <span className="wolf-name">{wolfId}</span></p>
                   )}
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Debug info */}
+          <div className="debug-info" style={{display: 'none'}}>
+            <h4>Debug Info</h4>
+            <p>Players count: {players.length}</p>
+            <p>Rankable players count: {rankablePlayers.length}</p>
+            <p>Round status: {roundStatus}</p>
+            <p>Is wolf: {isWolf ? 'Yes' : 'No'}</p>
+            <p>Is pack ranker: {isPackRanker ? 'Yes' : 'No'}</p>
+          </div>
+
+          {/* Ranking interface */}
+          {(roundStatus === 'wolf_ranking' && isWolf) || (roundStatus === 'pack_ranking' && isPackRanker) ? (
+            <div className="ranking-section">
+              <RankingContainer 
+                players={displayRankablePlayers}
+                onRankingChange={handleRankingChange}
+              />
+              
+              <div className="submit-ranking">
+                <button 
+                  className="submit-button"
+                  onClick={isWolf ? handleSubmitWolfRanking : handleSubmitPackRanking}
+                  disabled={displayRankablePlayers.length === 0}
+                >
+                  Submit Ranking
+                </button>
               </div>
+            </div>
+          ) : roundStatus === 'wolf_ranking' || roundStatus === 'pack_ranking' ? (
+            <div className="waiting-message">
+              <p>
+                {roundStatus === 'wolf_ranking' 
+                  ? `Waiting for ${wolfId} to rank players...` 
+                  : `Waiting for ${packRankerId} to rank players...`}
+              </p>
+            </div>
+          ) : null}
+
+          {/* Results display */}
+          {roundStatus === 'results' && roundResults && (
+            <ResultsDisplay 
+              wolfRanking={roundResults.wolfRanking}
+              packRanking={roundResults.packRanking}
+              packScore={roundResults.packScore}
+              question={question}
+            />
+          )}
+
+          {/* Players list */}
+          <div className="players-section">
+            <h3 className="players-title">Players</h3>
+            <div className="players-grid">
+              {players.length > 0 ? (
+                players.map(player => (
+                  <div 
+                    key={player.id} 
+                    className={`player-tile ${
+                      player.user__username === wolfId || player.username === wolfId 
+                        ? 'player-wolf' : ''
+                    }`}
+                  >
+                    <div className="player-tile-info">
+                      {(player.user__username === roomInfo?.host || player.username === roomInfo?.host) && (
+                        <span className="host-crown">👑</span>
+                      )}
+                      <span>{player.user__username || player.username}</span>
+                      {(player.user__username === wolfId || player.username === wolfId) && (
+                        <span className="wolf-label">(Wolf)</span>
+                      )}
+                    </div>
+                    <div className="player-score">
+                      Score: {player.score || 0}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-players-message">No players in the game yet</div>
+              )}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DndProvider>
   );
 }
 

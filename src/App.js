@@ -7,6 +7,7 @@ import Register from './components/Register';
 import StartPage from './components/StartPage';
 import GameLobby from './components/GameLobby';
 import Gameplay from './components/GamePlay';
+import ResultsPage from './components/ResultsPage';
 import axios from 'axios';
 
 function App() {
@@ -131,6 +132,7 @@ function App() {
               <Navigate to="/start" />
             ) : <Navigate to="/login" />} 
           />
+          <Route path="/results" element={<ResultsPage />} />
           <Route path="*" element={<Navigate to={isAuthenticated ? "/start" : "/login"} />} />
         </Routes>
       </div>
