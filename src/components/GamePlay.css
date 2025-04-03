@@ -666,3 +666,88 @@
       width: 100%;
     }
   }
+
+  /* Add these to your GamePlay.css file */
+
+/* Button state styling */
+.button-connecting {
+    background-color: #f0ad4e !important;
+    cursor: wait !important;
+    opacity: 0.8;
+  }
+  
+  .button-success {
+    background-color: #5cb85c !important;
+    transition: background-color 0.5s ease;
+  }
+  
+  .button-error {
+    background-color: #d9534f !important;
+    animation: button-error-flash 0.5s 3;
+  }
+  
+  @keyframes button-error-flash {
+    0%, 100% {
+      background-color: #d9534f;
+    }
+    50% {
+      background-color: #c9302c;
+    }
+  }
+  
+  /* Add a persistent connection indicator somewhere in your UI */
+  .connection-status {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    margin-left: auto;
+  }
+  
+  .connection-status-connected {
+    background-color: rgba(92, 184, 92, 0.2);
+    color: #5cb85c;
+  }
+  
+  .connection-status-disconnected {
+    background-color: rgba(217, 83, 79, 0.2);
+    color: #d9534f;
+  }
+  
+  .connection-status-connecting {
+    background-color: rgba(240, 173, 78, 0.2);
+    color: #f0ad4e;
+  }
+  
+  .connection-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+  
+  .connection-indicator-connected {
+    background-color: #5cb85c;
+  }
+  
+  .connection-indicator-disconnected {
+    background-color: #d9534f;
+  }
+  
+  .connection-indicator-connecting {
+    background-color: #f0ad4e;
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    100% {
+      opacity: 1;
+    }
+  }

@@ -5,347 +5,338 @@ import axios from 'axios';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrag, useDrop } from 'react-dnd';
-import './GamePlay.css'; // Make sure to create this CSS file
+// Material UI imports
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Paper, 
+  Container, 
+  Grid, 
+  Chip, 
+  LinearProgress, 
+  Card, 
+  CardContent, 
+  Avatar, 
+  ThemeProvider, 
+  createTheme, 
+  CircularProgress, 
+  Divider, 
+  Zoom,
+  Fade,
+  Grow,
+  Slide
+} from '@mui/material';
+import { 
+  PetsRounded, 
+  TimerOutlined, 
+  SignalWifiStatusbarConnectedNoInternet4, 
+  SignalWifiStatusbar4Bar, 
+  HighlightOff, 
+  SportsScore, 
+  EmojiEvents, 
+  Send,
+  WarningAmber,
+  ExitToApp,
+  FormatListNumbered,
+  KeyboardArrowRight,
+  KeyboardReturn,
+  PlayArrow
+} from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 
-// Draggable player name component
-const DraggablePlayer = ({ player, currentPosition }) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: 'player',
-    item: { 
-      id: player.id, 
-      username: player.username, 
-      currentPosition // Track current position for drag operations
+// Import your existing components
+import ConnectionStatus from './ConnectionStatus';
+import RankingContainer from './RankingContainer';
+import {StatusBanner, Timer} from './TimeAndStatus';
+import ResultsDisplay from './ResultsDisplay';
+
+// Import CSS with override styling
+import './GamePlay.css';
+
+// Create a custom wolf theme
+const wolfTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#4E387E', // Deep purple for wolf theme
+      light: '#8A6BBE',
+      dark: '#2A1B54',
+      contrastText: '#fff',
     },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+    secondary: {
+      main: '#FF6B35', // Orange accent for wolf actions
+      light: '#FF8C5A',
+      dark: '#CC4A1B',
+      contrastText: '#fff',
+    },
+    background: {
+      default: '#F5F3FF', // Light purple background
+      paper: '#FFFFFF',
+    },
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+    },
+    error: {
+      main: '#D32F2F',
+    },
+    warning: {
+      main: '#FFC107',
+    },
+    info: {
+      main: '#29B6F6',
+    },
+    success: {
+      main: '#43A047',
+    },
+  },
+  typography: {
+    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    h2: {
+      fontWeight: 600,
+      letterSpacing: '-0.01em',
+    },
+    h3: {
+      fontWeight: 600,
+    },
+    button: {
+      fontWeight: 600,
+      textTransform: 'none',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          padding: '10px 24px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+          },
+        },
+        containedPrimary: {
+          background: 'linear-gradient(135deg, #4E387E 0%, #6A4CAA 100%)',
+        },
+        containedSecondary: {
+          background: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%)',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          fontWeight: 500,
+        },
+      },
+    },
+  },
+});
 
-  return (
-    <div 
-      ref={drag} 
-      className={`player-card ${isDragging ? 'player-dragging' : currentPosition ? 'player-positioned' : 'player-available'}`}
-    >
-      <div className="player-info">
-        <div>
-          <p className="player-name">{player.username}</p>
-          {currentPosition && <span className="player-position">Position: {currentPosition}</span>}
-        </div>
-      </div>
-    </div>
-  );
+// Ensure CSS animations work with Material UI
+const styles = {
+  '@keyframes pulse': {
+    '0%': {
+      opacity: 0.6,
+      transform: 'scale(0.95)',
+    },
+    '50%': {
+      opacity: 1,
+      transform: 'scale(1.05)',
+    },
+    '100%': {
+      opacity: 0.6,
+      transform: 'scale(0.95)',
+    },
+  },
+  '@keyframes fadeIn': {
+    '0%': {
+      opacity: 0,
+    },
+    '100%': {
+      opacity: 1,
+    },
+  },
+  '@keyframes slideIn': {
+    '0%': {
+      transform: 'translateX(-20px)',
+      opacity: 0,
+    },
+    '100%': {
+      transform: 'translateX(0)',
+      opacity: 1,
+    },
+  },
+  '@keyframes bounce': {
+    '0%, 20%, 50%, 80%, 100%': {
+      transform: 'translateY(0)',
+    },
+    '40%': {
+      transform: 'translateY(-20px)',
+    },
+    '60%': {
+      transform: 'translateY(-10px)',
+    },
+  },
 };
 
-// Position card that accepts player drops
-const PositionCard = ({ position, assignedPlayer, onDrop, onRemovePlayer }) => {
-  const [{ isOver }, drop] = useDrop({
-    accept: 'player',
-    drop: (item) => onDrop(item, position),
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
+// Custom styled components
+const WolfAvatar = ({ isWolf, username }) => (
+  <Avatar 
+    sx={{ 
+      bgcolor: isWolf ? 'secondary.main' : 'primary.light',
+      width: 56, 
+      height: 56,
+      animation: isWolf ? 'pulse 2s infinite' : 'none',
+      boxShadow: isWolf ? '0 0 10px rgba(255,107,53,0.7)' : 'none',
+      border: isWolf ? '3px solid #FF6B35' : 'none',
+      fontWeight: 'bold',
+      fontSize: '1.2rem',
+    }}
+  >
+    {isWolf ? <PetsRounded fontSize="large" /> : username.charAt(0).toUpperCase()}
+  </Avatar>
+);
 
-  // Handle removing player from position
-  const handleRemoveClick = () => {
-    if (assignedPlayer) {
-      onRemovePlayer(position);
+// Enhanced connection status component
+const EnhancedConnectionStatus = ({ status }) => (
+  <Chip
+    icon={status === 'connected' ? 
+      <SignalWifiStatusbar4Bar sx={{ color: 'inherit' }} /> : 
+      <SignalWifiStatusbarConnectedNoInternet4 sx={{ color: 'inherit' }} />
     }
-  };
-
-  return (
-    <div 
-      ref={drop} 
-      className={`position-card ${
-        isOver ? 'position-hover' : assignedPlayer ? 'position-filled' : 'position-empty'
-      }`}
-    >
-      <div className="position-info">
-        <div className="position-number">{position}</div>
-        {assignedPlayer ? (
-          <>
-            <div className="position-player-name">{assignedPlayer.username}</div>
-            <button 
-              className="remove-player-btn" 
-              onClick={handleRemoveClick} 
-              title="Remove player from position"
-            >
-              ×
-            </button>
-          </>
-        ) : (
-          <div className="position-placeholder">Drop player here</div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const RankingContainer = ({ players, onRankingChange }) => {
-  const [rankings, setRankings] = useState({});
-  const [playerPositions, setPlayerPositions] = useState({});
-  const [totalPositions, setTotalPositions] = useState(players.length);
-  
-  // Update total positions if players array changes
-  useEffect(() => {
-    // Only update if the player count changes and is greater than current total
-    if (players.length > totalPositions) {
-      setTotalPositions(players.length);
-    }
-  }, [players.length, totalPositions]);
-  
-  // Create the positions array based on totalPositions
-  const positions = Array.from({ length: totalPositions }, (_, i) => i + 1);
-  
-  // Get the current position of a player
-  const getPlayerPosition = (playerId) => {
-    return playerPositions[playerId] || null;
-  };
-
-  // Convert rankings to the ordered list and notify parent
-  const updateParentComponent = useCallback((updatedRankings) => {
-    // Important: Use the fixed positions array, not derived from rankings
-    const orderedPlayers = positions
-      .filter(pos => updatedRankings[pos])
-      .map(pos => {
-        const playerId = updatedRankings[pos];
-        return players.find(p => p.id === playerId);
-      })
-      .filter(Boolean);
-    
-    console.log("Ordered players after update:", orderedPlayers);
-    onRankingChange(orderedPlayers);
-  }, [positions, players, onRankingChange]);
-
-  // Handle dropping a player on a position
-  const handleDrop = useCallback((player, position) => {
-    if (position > totalPositions) return;
-    console.log("Dropping player:", player, "at position:", position);
-    
-    setRankings(prevRankings => {
-      // Create copies of state to modify
-      let updatedRankings = { ...prevRankings };
-      
-      // If this position already has a player, remove that association
-      if (updatedRankings[position]) {
-        const currentPlayerId = updatedRankings[position];
-        
-        // Also update playerPositions in the next setState call
-        setPlayerPositions(prevPositions => {
-          const updatedPositions = { ...prevPositions };
-          delete updatedPositions[currentPlayerId];
-          return updatedPositions;
-        });
+    label={status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}
+    color={status === 'connected' ? 'success' : status === 'connecting' ? 'warning' : 'error'}
+    variant="outlined"
+    size="medium"
+    sx={{
+      fontWeight: 500,
+      px: 1,
+      '& .MuiChip-icon': {
+        animation: status === 'connecting' ? 'pulse 1.5s infinite' : 'none'
       }
-      
-      // If player is already in another position, remove from there
-      if (player.currentPosition) {
-        delete updatedRankings[player.currentPosition];
-      }
-      
-      // Assign the player to the new position
-      updatedRankings[position] = player.id;
-      
-      // Also update playerPositions in a separate setState call
-      setPlayerPositions(prevPositions => {
-        const updatedPositions = { ...prevPositions };
-        updatedPositions[player.id] = position;
-        return updatedPositions;
-      });
-      
-      // Return the updated rankings for this setState call
-      return updatedRankings;
-    });
-    
-    // Use setTimeout to ensure the state updates have processed before notifying parent
-    setTimeout(() => {
-      updateParentComponent({ ...rankings, [position]: player.id });
-    }, 0);
-  }, [totalPositions, rankings, updateParentComponent]);
-  
-  // Handle removing a player from a position
-  const handleRemovePlayer = useCallback((position) => {
-    const playerId = rankings[position];
-    if (!playerId) return;
-    
-    setRankings(prevRankings => {
-      // Create a copy to modify
-      let updatedRankings = { ...prevRankings };
-      // Remove the position association
-      delete updatedRankings[position];
-      return updatedRankings;
-    });
-    
-    setPlayerPositions(prevPositions => {
-      // Create a copy to modify
-      let updatedPositions = { ...prevPositions };
-      // Remove the player's position
-      delete updatedPositions[playerId];
-      return updatedPositions;
-    });
-    
-    // Notify parent after a small delay to ensure state is updated
-    setTimeout(() => {
-      const updatedRankings = { ...rankings };
-      delete updatedRankings[position];
-      updateParentComponent(updatedRankings);
-    }, 0);
-  }, [rankings, updateParentComponent]);
-  
-  // Get the player object assigned to a position
-  const getPlayerForPosition = useCallback((position) => {
-    const playerId = rankings[position];
-    if (!playerId) return null;
-    return players.find(p => p.id === playerId);
-  }, [rankings, players]);
+    }}
+  />
+);
 
-  // Group players into positioned and unpositioned
-  const positionedPlayerIds = Object.values(rankings);
-  const unpositionedPlayers = players.filter(player => !positionedPlayerIds.includes(player.id));
+// Enhanced timer display
+const EnhancedTimer = ({ timeLeft, totalTime = 60 }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+    <TimerOutlined color="primary" sx={{ mr: 1 }} />
+    <Box sx={{ width: '100%', mr: 1 }}>
+      <LinearProgress 
+        variant="determinate" 
+        value={(timeLeft / totalTime) * 100} 
+        color={timeLeft < 10 ? "error" : timeLeft < 20 ? "warning" : "primary"}
+        sx={{ 
+          height: 10, 
+          borderRadius: 5,
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 5,
+            background: timeLeft < 10 
+              ? 'linear-gradient(90deg, #FF5252 0%, #FF1744 100%)' 
+              : timeLeft < 20 
+                ? 'linear-gradient(90deg, #FFD740 0%, #FFC107 100%)'
+                : 'linear-gradient(90deg, #4E387E 0%, #6A4CAA 100%)',
+          }
+        }}
+      />
+    </Box>
+    <Box sx={{ width: 40 }}>
+      <Typography 
+        variant="body2" 
+        color={timeLeft < 10 ? "error" : timeLeft < 20 ? "warning.main" : "text.secondary"}
+        fontWeight="bold"
+        sx={{
+          animation: timeLeft < 10 ? 'pulse 1s infinite' : 'none'
+        }}
+      >
+        {timeLeft}s
+      </Typography>
+    </Box>
+  </Box>
+);
 
-  // Debug logging for state tracking
-  // useEffect(() => {
-  //   console.log("Rankings updated:", rankings);
-  //   console.log("Player positions updated:", playerPositions);
-  //   console.log("Positioned player IDs:", positionedPlayerIds);
-  //   console.log("Unpositioned players:", unpositionedPlayers);
-  // }, [rankings, playerPositions, positionedPlayerIds, unpositionedPlayers]);
-
-  return (
-    <div className="ranking-container">
-      {/* Left side: Position cards */}
-      <div className="ranking-positions">
-        <h3 className="section-title">Rankings</h3>
-        {positions.map(position => (
-          <PositionCard 
-            key={position} 
-            position={position} 
-            assignedPlayer={getPlayerForPosition(position)}
-            onDrop={handleDrop}
-            onRemovePlayer={handleRemovePlayer}
-          />
-        ))}
-      </div>
-      {/* Right side: Available players */}
-      <div className="ranking-players">
-        <h3 className="section-title">Available Players</h3>
-        
-        {unpositionedPlayers.length > 0 ? (
-          unpositionedPlayers.map(player => (
-            <DraggablePlayer 
-              key={player.id} 
-              player={player}
-              currentPosition={getPlayerPosition(player.id)}
-            />
-          ))
-        ) : (
-          <div className="empty-players-message">All players have been positioned</div>
-        )}
-        
-        {/* Show positioned players separately for easy access */}
-        {positionedPlayerIds.length > 0 && (
-          <div className="positioned-players-section">
-            <h3 className="section-title">Positioned Players</h3>
-            <p className="hint-text">You can drag these to other positions</p>
-            {players
-              .filter(p => positionedPlayerIds.includes(p.id))
-              .map(player => (
-                <DraggablePlayer 
-                  key={player.id} 
-                  player={player}
-                  currentPosition={getPlayerPosition(player.id)}
-                />
-              ))
-            }
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Timer component
-const Timer = ({ timeLeft }) => {
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  
-  return (
-    <div className="timer-container">
-      <div className={`timer-display ${timeLeft < 30 ? 'timer-warning' : ''}`}>
-        {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
-      </div>
-      <p className="timer-label">Time Remaining</p>
-    </div>
-  );
-};
-
-// Status Banner component
-const StatusBanner = ({ roundStatus, isWolf }) => {
-  let message = "";
-  let bannerClass = "status-banner status-info";
+// Enhanced status banner
+const EnhancedStatusBanner = ({ roundStatus, isWolf }) => {
+  let statusText = '';
+  let statusColor = '';
+  let statusIcon = null;
 
   switch (roundStatus) {
     case 'waiting':
-      message = "Waiting for the host to start the round";
+      statusText = 'Waiting for next round';
+      statusColor = 'info';
+      statusIcon = <KeyboardReturn />;
       break;
     case 'wolf_ranking':
-      message = isWolf ? "You are the wolf! Rank the players" : "Waiting for the wolf to rank players";
-      bannerClass = isWolf ? "status-banner status-danger" : "status-banner status-warning";
+      statusText = isWolf ? 'Your turn to rank players!' : 'Wolf is ranking players';
+      statusColor = isWolf ? 'secondary' : 'warning';
+      statusIcon = <PetsRounded />;
       break;
     case 'pack_ranking':
-      message = "The pack is now ranking players";
-      bannerClass = "status-banner status-success";
+      statusText = 'Pack ranker is ordering players';
+      statusColor = 'primary';
+      statusIcon = <FormatListNumbered />;
       break;
     case 'results':
-      message = "Round results";
-      bannerClass = "status-banner status-purple";
+      statusText = 'Round Results';
+      statusColor = 'success';
+      statusIcon = <EmojiEvents />;
       break;
     default:
-      message = "Waiting...";
+      statusText = 'Unknown Status';
+      statusColor = 'default';
   }
 
   return (
-    <div className={bannerClass}>
-      {message}
-    </div>
-  );
-};
-
-// Results component
-const ResultsDisplay = ({ wolfRanking, packRanking, packScore, question }) => {
-  console.log("Results Display:", { wolfRanking, packRanking, packScore, question });
-  return (
-    <div className="results-container">
-      <h3 className="results-title">Round Results</h3>
-      <p className="results-question">Question: {question}</p>
-      
-      <div className="results-columns">
-        <div className="results-column">
-          <h4 className="wolf-ranking-title">Wolf's Ranking</h4>
-          <ol className="ranking-list">
-            {wolfRanking.map((player, idx) => (
-              <li key={player.id} className="ranking-item">{player.username}</li>
-            ))}
-          </ol>
-        </div>
-        
-        <div className="results-column">
-          <h4 className="pack-ranking-title">Pack's Ranking</h4>
-          <ol className="ranking-list">
-            {packRanking.map((player, idx) => (
-              <li key={player.id} className="ranking-item">{player.username}</li>
-            ))}
-          </ol>
-        </div>
-      </div>
-      
-      <div className="score-container">
-        <p className="score-value">Pack Score: <span className="score-number">{packScore}</span></p>
-        <p className="score-explanation">
-          (Points awarded to each pack member)
-        </p>
-      </div>
-    </div>
+    <Grow in timeout={800}>
+      <Chip
+        icon={statusIcon}
+        label={statusText}
+        color={statusColor}
+        variant="filled"
+        size="large"
+        sx={{
+          py: 2,
+          px: 2,
+          fontSize: '1rem',
+          fontWeight: 600,
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          '& .MuiChip-label': {
+            px: 1
+          }
+        }}
+      />
+    </Grow>
   );
 };
 
@@ -353,13 +344,13 @@ const ResultsDisplay = ({ wolfRanking, packRanking, packScore, question }) => {
 function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const { roomCode } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [wsConnected, setWsConnected] = useState(false);
   const [messages, setMessages] = useState([]);
   
   // Game flow states
-  const [roundStatus, setRoundStatus] = useState('waiting'); // waiting, wolf_ranking, pack_ranking, results
+  const [roundStatus, setRoundStatus] = useState('waiting');
   const [currentRound, setCurrentRound] = useState(1);
   const [totalRounds, setTotalRounds] = useState(3);
   const [players, setPlayers] = useState([]);
@@ -374,38 +365,88 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   const [packRanking, setPackRanking] = useState([]);
   const [roundResults, setRoundResults] = useState(null);
   const [rankablePlayers, setRankablePlayers] = useState([]);
-  
+  const [buttonFeedback, setButtonFeedback] = useState('');
+
+  // All your ref declarations
   const socketRef = useRef(null);
   const timerRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
-  const MAX_RECONNECT_ATTEMPTS = 5;
+  const pingIntervalRef = useRef(null);
+  const lastPongTimeRef = useRef(Date.now());
+  
+  // const socketRef = useRef(null);
+  // const timerRef = useRef(null);
+  // const reconnectTimeoutRef = useRef(null);
+  // const reconnectAttemptsRef = useRef(0);
+  // const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_DELAY = 3000; // 3 seconds
+
+  const MAX_RECONNECT_ATTEMPTS = 10; // Increase from 5 to 10
+  const BASE_RECONNECT_DELAY = 1000; // Start with 1 second
+  const MAX_RECONNECT_DELAY = 10000; // Cap at 10 seconds
   
   // Establish the WebSocket connection with reconnection logic
   const connectWebSocket = useCallback(() => {
     if (!roomCode || !user?.username) return;
     
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+    // Don't try to reconnect if connection is already being established
+    if (socketRef.current && socketRef.current.readyState === WebSocket.CONNECTING) {
+      console.log('WebSocket connection already in progress');
       return;
     }
-
-    const token = localStorage.getItem('access_token');
-    const wsURL = `ws://localhost:8000/ws/game/${roomCode}/?token=${token}`;
     
-    // Clean up any existing connection
+    // If socket is already open, don't reconnect
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.close();
+      console.log('WebSocket connection already established');
+      return;
+    }
+  
+    const token = localStorage.getItem('access_token');
+    // Use secure websocket for production
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = process.env.REACT_APP_API_HOST || 'localhost:8000';
+    const wsURL = `${protocol}//${host}/ws/game/${roomCode}/?token=${token}`;
+    
+    // Clean up any existing connection that's in the process of closing
+    if (socketRef.current && socketRef.current.readyState === WebSocket.CLOSING) {
+      console.log('Waiting for previous WebSocket to close');
+      setTimeout(() => connectWebSocket(), 500);
+      return;
     }
     
+    console.log('Establishing new WebSocket connection');
     const socket = new WebSocket(wsURL);
     socketRef.current = socket;
-
+  
+    // Set a connection timeout
+    const connectionTimeoutId = setTimeout(() => {
+      if (socket.readyState !== WebSocket.OPEN) {
+        console.log('Connection attempt timed out');
+        socket.close();
+        // This will trigger the onclose event which handles reconnection
+      }
+    }, 5000);
+  
     socket.onopen = () => {
       console.log('GamePlay WebSocket connection established');
+      clearTimeout(connectionTimeoutId);
       setWsConnected(true);
       reconnectAttemptsRef.current = 0;
       setMessages(prev => [...prev, { type: 'system', content: 'Connected to game' }]);
+      
+      // Clear any connection errors
+      setError('');
+      
+      // Send a ping immediately to verify connection
+      socket.send(JSON.stringify({ type: 'ping' }));
+      
+      // Set up regular pings to keep the connection alive
+      pingIntervalRef.current = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 30000); // Send ping every 30 seconds
     };
 
     socket.onmessage = (event) => {
@@ -414,6 +455,10 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
         console.log('GamePlay WebSocket message received:', data);
 
         switch (data.type) {
+          case 'pong':
+            console.log('Received pong from server');
+            lastPongTimeRef.current = Date.now();
+            return;
           case 'round_start':
             handleRoundStart(data);
             break;
@@ -452,30 +497,53 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
 
     socket.onclose = (event) => {
       console.log('GamePlay WebSocket connection closed', event);
+      clearTimeout(connectionTimeoutId);
+      clearInterval(pingIntervalRef.current);
       setWsConnected(false);
       setMessages(prev => [...prev, { type: 'system', content: 'Disconnected from game' }]);
       
       // Attempt to reconnect if not closed intentionally (code 1000)
       if (event.code !== 1000 && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        // Calculate exponential backoff delay
+        const delay = Math.min(
+          BASE_RECONNECT_DELAY * Math.pow(1.5, reconnectAttemptsRef.current),
+          MAX_RECONNECT_DELAY
+        );
+        
         setMessages(prev => [...prev, { 
           type: 'system', 
-          content: `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})...` 
+          content: `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS}) in ${delay/1000}s...` 
         }]);
         
         reconnectTimeoutRef.current = setTimeout(() => {
           reconnectAttemptsRef.current += 1;
           connectWebSocket();
-        }, RECONNECT_DELAY);
+        }, delay);
       } else if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
         setError('Failed to connect after multiple attempts. Please refresh the page to try again.');
       }
     };
-
+  
     socket.onerror = (error) => {
       console.error('GamePlay WebSocket error:', error);
       setMessages(prev => [...prev, { type: 'error', content: 'Error connecting to game' }]);
     };
   }, [roomCode, user?.username]);
+
+
+  useEffect(() => {
+    const healthCheckInterval = setInterval(() => {
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        // If we haven't received a pong in 45 seconds, the connection might be dead
+        if (Date.now() - lastPongTimeRef.current > 45000) {
+          console.log('Connection appears stale. Attempting reconnect...');
+          socketRef.current.close();
+        }
+      }
+    }, 15000);
+    
+    return () => clearInterval(healthCheckInterval);
+  }, []);
 
   // Add this function to the GamePlay component
   const handleGameEnd = (data) => {
@@ -608,19 +676,73 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
 
   // Function to start a new round
   const handleStartRound = () => {
-    if (!isHost || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    if (!isHost) return;
     
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      // Show visual feedback that connection is being established
+      setButtonFeedback('connecting');
+      
+      // Try to reconnect if needed
+      connectWebSocket();
+      
+      // Wait a moment for connection to establish, then try again
+      setTimeout(() => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          sendStartRoundMessage();
+          setButtonFeedback('success');
+        } else {
+          setButtonFeedback('error');
+          setError('Connection failed. Please try again.');
+          setTimeout(() => setButtonFeedback(''), 2000); // Clear feedback after 2 seconds
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    // Connection is already open, send message directly
+    sendStartRoundMessage();
+    setButtonFeedback('success');
+    setTimeout(() => setButtonFeedback(''), 2000); // Clear feedback after 2 seconds
+  };
+
+  const sendStartRoundMessage = () => {
     console.log('Starting new round...');
     socketRef.current.send(JSON.stringify({
       type: 'start_round',
       round_number: currentRound
     }));
   };
+  
 
   // Function to submit wolf ranking
   const handleSubmitWolfRanking = () => {
-    if (!isWolf || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    if (!isWolf) return;
     
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      setButtonFeedback('connecting');
+      connectWebSocket();
+      
+      setTimeout(() => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          sendWolfRankingMessage();
+          setButtonFeedback('success');
+        } else {
+          setButtonFeedback('error');
+          setError('Connection failed. Please try again.');
+          setTimeout(() => setButtonFeedback(''), 2000);
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    sendWolfRankingMessage();
+    setButtonFeedback('success');
+    setTimeout(() => setButtonFeedback(''), 2000);
+  };
+  
+  const sendWolfRankingMessage = () => {
     console.log("Submitting wolf ranking for players:", rankablePlayers);
     
     // Convert the array of ranked players to the format expected by the backend
@@ -635,11 +757,34 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
       round_number: currentRound
     }));
   };
-
-  // Function to submit pack ranking
+  
   const handleSubmitPackRanking = () => {
-    if (!isPackRanker || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    if (!isPackRanker) return;
     
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      setButtonFeedback('connecting');
+      connectWebSocket();
+      
+      setTimeout(() => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          sendPackRankingMessage();
+          setButtonFeedback('success');
+        } else {
+          setButtonFeedback('error');
+          setError('Connection failed. Please try again.');
+          setTimeout(() => setButtonFeedback(''), 2000);
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    sendPackRankingMessage();
+    setButtonFeedback('success');
+    setTimeout(() => setButtonFeedback(''), 2000);
+  };
+  
+  const sendPackRankingMessage = () => {
     console.log("Submitting pack ranking for players:", rankablePlayers);
     
     // Convert the array of ranked players to the format expected by the backend
@@ -657,8 +802,37 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
 
   // Function to end current round and prepare for next
   const handleEndRound = () => {
-    if (!isHost || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    if (!isHost) return;
     
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      // Show visual feedback that connection is being established
+      setButtonFeedback('connecting');
+      
+      // Try to reconnect if needed
+      connectWebSocket();
+      
+      // Wait a moment for connection to establish, then try again
+      setTimeout(() => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          sendEndRoundMessage();
+          setButtonFeedback('success');
+        } else {
+          setButtonFeedback('error');
+          setError('Connection failed. Please try again.');
+          setTimeout(() => setButtonFeedback(''), 2000); // Clear feedback after 2 seconds
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    // Connection is already open, send message directly
+    sendEndRoundMessage();
+    setButtonFeedback('success');
+    setTimeout(() => setButtonFeedback(''), 2000); // Clear feedback after 2 seconds
+  };
+
+  const sendEndRoundMessage = () => {
     socketRef.current.send(JSON.stringify({
       type: 'change_status',
       status: 'waiting',
@@ -697,19 +871,18 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
 
   const [roomInfo, setRoomInfo] = useState({});
 
+  // Add the existing getRoomData function - keeping as is
   const getRoomData = async() => {
     try {
-      setLoading(true); // Set loading state while fetching
+      setLoading(true);
       console.log("Fetching room data for room code:", roomCode);
       const response = await axios.get(`http://localhost:8000/api/game/get-room-details/?room_code=${roomCode}`);
       console.log("Room data received:", response.data);
       setRoomInfo(response.data);
       
-      // If we have current_players, process them right away
       if (response.data.current_players && response.data.current_players.length > 0) {
         setPlayers(response.data.current_players);
         
-        // If we're already in a round with a wolf, set up rankable players
         if (wolfId) {
           const rankable = prepareRankablePlayers(response.data.current_players, wolfId);
           console.log("Setting initial rankable players from API response:", rankable);
@@ -717,7 +890,7 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
         }
       }
       
-      setLoading(false); // End loading state
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching room data:', error);
       setError('Failed to load game data. Please try again.');
@@ -784,20 +957,86 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   }, [roundStatus, isWolf, isPackRanker, wolfId, packRankerId, players, rankablePlayers]);
 
   if (loading) {
-    return <div className="loading-screen">Loading game...</div>;
+    return (
+      <ThemeProvider theme={wolfTheme}>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh',
+            bgcolor: 'background.default',
+            backgroundImage: 'radial-gradient(circle, rgba(138,107,190,0.1) 10%, transparent 10%), radial-gradient(circle, rgba(138,107,190,0.1) 10%, transparent 10%)',
+            backgroundSize: '30px 30px',
+            backgroundPosition: '0 0, 15px 15px',
+          }}
+        >
+          <CircularProgress size={60} color="primary" />
+          <Typography variant="h4" color="primary.main" sx={{ mt: 3, fontWeight: 600 }}>
+            Loading game...
+          </Typography>
+          <Box sx={{ mt: 2, width: '60%', maxWidth: 400 }}>
+            <LinearProgress color="secondary" sx={{ height: 8, borderRadius: 4 }} />
+          </Box>
+          <Fade in timeout={1000}>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2, animation: 'bounce 2s infinite' }}>
+              <PetsRounded sx={{ verticalAlign: 'middle', mr: 1 }} /> Calling the wolf pack...
+            </Typography>
+          </Fade>
+        </Box>
+      </ThemeProvider>
+    );
   }
 
   if (error) {
     return (
-      <div className="error-screen">
-        <div className="error-message">{error}</div>
-        <button 
-          className="return-button"
-          onClick={() => navigate('/lobby')}
+      <ThemeProvider theme={wolfTheme}>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh',
+            bgcolor: 'background.default'
+          }}
         >
-          Return to Lobby
-        </button>
-      </div>
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 4, 
+              borderRadius: 4, 
+              textAlign: 'center',
+              border: '2px solid',
+              borderColor: 'error.main',
+              maxWidth: 600,
+              width: '80%'
+            }}
+          >
+            <WarningAmber color="error" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography variant="h4" color="error" gutterBottom>
+              Oops! Something went wrong
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 3 }}>
+              {error}
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              size="large"
+              startIcon={<KeyboardReturn />}
+              onClick={() => navigate('/lobby')}
+              sx={{ 
+                minWidth: 200,
+                animation: 'pulse 2s infinite'
+              }}
+            >
+              Return to Lobby
+            </Button>
+          </Paper>
+        </Box>
+      </ThemeProvider>
     );
   }
 
@@ -814,154 +1053,426 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
   }
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="game-container">
-        <div className="game-panel">
-          <div className="game-header">
-            <h1 className="room-title">Room: {roomCode}</h1>
-            <div className="header-buttons">
-              <button 
-                className="leave-button"
-                onClick={onLeaveLobby}
-              >
-                Leave Game
-              </button>
-            </div>
-          </div>
+    <ThemeProvider theme={wolfTheme}>
+      <DndProvider backend={HTML5Backend}>
+        <Box 
+          sx={{ 
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'52\' height=\'26\' viewBox=\'0 0 52 26\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%234e387e\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            pt: 3,
+            pb: 5,
+          }}
+        >
+          <Container maxWidth="lg">
+            {/* Header */}
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 2, 
+                mb: 3, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, #4E387E 0%, #6A4CAA 100%)',
+                color: 'white',
+                borderRadius: '16px'
+              }}
+            >
+              <Zoom in timeout={800}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <PetsRounded sx={{ fontSize: 36, mr: 2 }} />
+                  <Typography variant="h4" component="h1" fontWeight="bold">
+                    Wolf Pack
+                  </Typography>
+                  <Chip 
+                    label={`Room: ${roomCode}`}
+                    sx={{ 
+                      ml: 2, 
+                      bgcolor: alpha('#fff', 0.25), 
+                      color: 'white',
+                      fontWeight: 'bold' 
+                    }} 
+                  />
+                </Box>
+              </Zoom>
 
-          <div className="status-section">
-            <StatusBanner roundStatus={roundStatus} isWolf={isWolf} />
-            
-            {timeLeft > 0 && (
-              <Timer timeLeft={timeLeft} />
-            )}
-          </div>
-
-          {/* Round information */}
-          <div className="round-section">
-            <div className="round-info">
-              <div className="round-header">
-                <h2 className="round-title">Round {currentRound} of {totalRounds}</h2>
-                {isHost && roundStatus === 'waiting' && (
-                  <button 
-                    className="start-round-button"
-                    onClick={handleStartRound}
-                  >
-                    Start Round
-                  </button>
-                )}
-                {isHost && roundStatus === 'results' && (
-                  <button 
-                    className="next-round-button"
-                    onClick={handleEndRound}
-                  >
-                    Next Round
-                  </button>
-                )}
-              </div>
-              
-              {question && (
-                <div className="question-display">
-                  <h3 className="question-text">{question}</h3>
-                </div>
-              )}
-              
-              {wolfId && (
-                <div className="wolf-info">
-                  {isWolf ? (
-                    <p className="wolf-status-player">You are the wolf!</p>
-                  ) : (
-                    <p className="wolf-status">Wolf: <span className="wolf-name">{wolfId}</span></p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Debug info */}
-          <div className="debug-info" style={{display: 'none'}}>
-            <h4>Debug Info</h4>
-            <p>Players count: {players.length}</p>
-            <p>Rankable players count: {rankablePlayers.length}</p>
-            <p>Round status: {roundStatus}</p>
-            <p>Is wolf: {isWolf ? 'Yes' : 'No'}</p>
-            <p>Is pack ranker: {isPackRanker ? 'Yes' : 'No'}</p>
-          </div>
-
-          {/* Ranking interface */}
-          {(roundStatus === 'wolf_ranking' && isWolf) || (roundStatus === 'pack_ranking' && isPackRanker) ? (
-            <div className="ranking-section">
-              <RankingContainer 
-                players={displayRankablePlayers}
-                onRankingChange={handleRankingChange}
-              />
-              
-              <div className="submit-ranking">
-                <button 
-                  className="submit-button"
-                  onClick={isWolf ? handleSubmitWolfRanking : handleSubmitPackRanking}
-                  disabled={displayRankablePlayers.length === 0}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <EnhancedConnectionStatus 
+                  status={wsConnected ? 'connected' : reconnectAttemptsRef.current > 0 ? 'connecting' : 'disconnected'} 
+                />
+                <Button 
+                  variant="outlined" 
+                  color="inherit"
+                  startIcon={<ExitToApp />}
+                  onClick={onLeaveLobby}
+                  sx={{ 
+                    borderColor: 'white', 
+                    '&:hover': { 
+                      bgcolor: alpha('#fff', 0.1),
+                      borderColor: 'white'
+                    } 
+                  }}
                 >
-                  Submit Ranking
-                </button>
-              </div>
-            </div>
-          ) : roundStatus === 'wolf_ranking' || roundStatus === 'pack_ranking' ? (
-            <div className="waiting-message">
-              <p>
-                {roundStatus === 'wolf_ranking' 
-                  ? `Waiting for ${wolfId} to rank players...` 
-                  : `Waiting for ${packRankerId} to rank players...`}
-              </p>
-            </div>
-          ) : null}
+                  Leave Game
+                </Button>
+              </Box>
+            </Paper>
 
-          {/* Results display */}
-          {roundStatus === 'results' && roundResults && (
-            <ResultsDisplay 
-              wolfRanking={roundResults.wolfRanking}
-              packRanking={roundResults.packRanking}
-              packScore={roundResults.packScore}
-              question={question}
-            />
-          )}
+            {/* Main Game Area */}
+            <Grid container spacing={3}>
+              {/* Left Column: Game Status */}
+              <Grid item xs={12} md={8}>
+                <Fade in timeout={1000}>
+                  <Paper elevation={3} sx={{ p: 3, mb: 3, position: 'relative', overflow: 'hidden' }}>
+                    {/* Wolf paw print background */}
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        opacity: 0.05,
+                        transform: 'rotate(15deg)',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <PetsRounded sx={{ fontSize: 180 }} />
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h5" component="h2" fontWeight="bold" color="primary">
+                        Round {currentRound} of {totalRounds}
+                      </Typography>
 
-          {/* Players list */}
-          <div className="players-section">
-            <h3 className="players-title">Players</h3>
-            <div className="players-grid">
-              {players.length > 0 ? (
-                players.map(player => (
-                  <div 
-                    key={player.id} 
-                    className={`player-tile ${
-                      player.user__username === wolfId || player.username === wolfId 
-                        ? 'player-wolf' : ''
-                    }`}
+                      <Box>
+                        {isHost && roundStatus === 'waiting' && (
+                          <Zoom in>
+                            <Button 
+                              variant="contained" 
+                              color="secondary"
+                              startIcon={<PlayArrow />}
+                              onClick={handleStartRound}
+                              disabled={buttonFeedback === 'connecting'}
+                              sx={{ 
+                                borderRadius: '20px',
+                                animation: 'pulse 2s infinite',
+                              }}
+                            >
+                              {buttonFeedback === 'connecting' ? 'Connecting...' : 'Start Round'}
+                            </Button>
+                          </Zoom>
+                        )}
+                        {isHost && roundStatus === 'results' && (
+                          <Zoom in>
+                            <Button 
+                              variant="contained" 
+                              color="primary"
+                              startIcon={<KeyboardArrowRight />}
+                              onClick={handleEndRound}
+                              disabled={buttonFeedback === 'connecting'}
+                              sx={{ borderRadius: '20px' }}
+                            >
+                              {buttonFeedback === 'connecting' ? 'Connecting...' : 'Next Round'}
+                            </Button>
+                          </Zoom>
+                        )}
+                      </Box>
+                    </Box>
+
+                    <Divider sx={{ mb: 2 }} />
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                      <EnhancedStatusBanner roundStatus={roundStatus} isWolf={isWolf} />
+                    
+                      {timeLeft > 0 && (
+                        <Box sx={{ width: '100%', mt: 2 }}>
+                          <EnhancedTimer timeLeft={timeLeft} />
+                        </Box>
+                      )}
+                    </Box>
+
+                    {question && (
+                      <Grow in timeout={500}>
+                        <Paper 
+                          elevation={2} 
+                          sx={{ 
+                            p: 3, 
+                            mb: 3, 
+                            bgcolor: alpha(wolfTheme.palette.primary.light, 0.1),
+                            border: `1px solid ${alpha(wolfTheme.palette.primary.main, 0.2)}`,
+                            borderRadius: 3
+                          }}
+                        >
+                          <Typography variant="h5" component="h3" fontWeight="600" color="primary.dark" gutterBottom>
+                            Question:
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontStyle: 'italic' }}>
+                            {question}
+                          </Typography>
+                        </Paper>
+                      </Grow>
+                    )}
+
+                    {wolfId && (
+                      <Grow in timeout={800}>
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            p: 2, 
+                            mb: 3,
+                            borderRadius: 2,
+                            bgcolor: isWolf ? alpha(wolfTheme.palette.secondary.light, 0.1) : 'transparent',
+                            border: isWolf ? `2px dashed ${wolfTheme.palette.secondary.main}` : 'none'
+                          }}
+                        >
+                          <WolfAvatar isWolf={true} username={wolfId} />
+                          <Box sx={{ ml: 2 }}>
+                            {isWolf ? (
+                              <Typography 
+                                variant="h6" 
+                                sx={{ 
+                                  fontWeight: 'bold', 
+                                  color: 'secondary.main',
+                                  animation: 'pulse 2s infinite'
+                                }}
+                              >
+                                You are the Wolf! 🐺
+                              </Typography>
+                            ) : (
+                              <Typography variant="h6">
+                                Wolf: <span style={{ fontWeight: 'bold', color: wolfTheme.palette.secondary.main }}>{wolfId}</span>
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </Grow>
+                    )}
+
+                    {/* Ranking interface */}
+                    {(roundStatus === 'wolf_ranking' && isWolf) || (roundStatus === 'pack_ranking' && isPackRanker) ? (
+                      <Grow in timeout={500}>
+                        <Box sx={{ mt: 4 }}>
+                          <Typography 
+                            variant="h5" 
+                            component="h3" 
+                            fontWeight="bold" 
+                            color="primary.dark" 
+                            gutterBottom
+                          >
+                            {isWolf ? 'Arrange Players in Your Order:' : 'Arrange Players as the Pack:'}
+                          </Typography>
+                          
+                          <Paper 
+                            elevation={2} 
+                            sx={{ 
+                              p: 3, 
+                              bgcolor: alpha(wolfTheme.palette.primary.light, 0.05),
+                              borderRadius: 3,
+                              border: `1px dashed ${wolfTheme.palette.primary.main}`
+                            }}
+                          >
+                            <RankingContainer 
+                              players={displayRankablePlayers}
+                              onRankingChange={handleRankingChange}
+                            />
+                          </Paper>
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                            <Button 
+                              variant="contained" 
+                              color={isWolf ? "secondary" : "primary"}
+                              size="large"
+                              startIcon={<Send />}
+                              onClick={isWolf ? handleSubmitWolfRanking : handleSubmitPackRanking}
+                              disabled={displayRankablePlayers.length === 0 || buttonFeedback === 'connecting'}
+                              sx={{ minWidth: 200, py: 1.5 }}
+                            >
+                              {buttonFeedback === 'connecting' ? 'Connecting...' : 'Submit Ranking'}
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Grow>
+                    ) : roundStatus === 'wolf_ranking' || roundStatus === 'pack_ranking' ? (
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          alignItems: 'center', 
+                          py: 5,
+                          flexDirection: 'column'
+                        }}
+                      >
+                        <CircularProgress size={48} color={roundStatus === 'wolf_ranking' ? 'secondary' : 'primary'} />
+                        <Typography 
+                          variant="h6" 
+                          color="text.secondary" 
+                          sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }}
+                        >
+                          {roundStatus === 'wolf_ranking' 
+                            ? `Waiting for ${wolfId} to rank players...` 
+                            : `Waiting for ${packRankerId} to rank players...`}
+                        </Typography>
+                      </Box>
+                    ) : null}
+
+                    {/* Results display */}
+                    {roundStatus === 'results' && roundResults && (
+                      <Grow in timeout={500}>
+                        <Box>
+                          <ResultsDisplay 
+                            wolfRanking={roundResults.wolfRanking}
+                            packRanking={roundResults.packRanking}
+                            packScore={roundResults.packScore}
+                            question={question}
+                          />
+                        </Box>
+                      </Grow>
+                    )}
+                  </Paper>
+                </Fade>
+              </Grid>
+
+              {/* Right Column: Players */}
+              <Grid item xs={12} md={4}>
+                <Fade in timeout={1200}>
+                  <Paper 
+                    elevation={3} 
+                    sx={{ 
+                      p: 3, 
+                      bgcolor: 'background.paper',
+                      height: '100%',
+                    }}
                   >
-                    <div className="player-tile-info">
-                      {(player.user__username === roomInfo?.host || player.username === roomInfo?.host) && (
-                        <span className="host-crown">👑</span>
+                    <Typography variant="h5" component="h2" fontWeight="bold" color="primary" gutterBottom>
+                      Players
+                    </Typography>
+
+                    <Box sx={{ mt: 2 }}>
+                      {players.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {players.map(player => {
+                            const username = player.user__username || player.username;
+                            const isPlayerWolf = username === wolfId;
+                            const isPlayerHost = username === roomInfo?.host;
+                            const isCurrentPlayer = username === user?.username;
+                            const isPackRankerPlayer = username === packRankerId;
+                            
+                            return (
+                              <Grid item xs={12} key={player.id}>
+                                <Card 
+                                  sx={{ 
+                                    position: 'relative',
+                                    transition: 'all 0.3s ease',
+                                    bgcolor: isCurrentPlayer ? alpha(wolfTheme.palette.primary.light, 0.1) : 'background.paper',
+                                    borderLeft: isCurrentPlayer ? `4px solid ${wolfTheme.palette.primary.main}` : 'none',
+                                    border: isPlayerWolf 
+                                      ? `2px solid ${wolfTheme.palette.secondary.main}`
+                                      : isPackRankerPlayer
+                                        ? `2px solid ${wolfTheme.palette.primary.main}`
+                                        : 'none',
+                                    '&:hover': {
+                                      transform: 'translateY(-3px)',
+                                      boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                                    },
+                                  }}
+                                >
+                                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <WolfAvatar 
+                                          isWolf={isPlayerWolf} 
+                                          username={username} 
+                                        />
+                                        <Box sx={{ ml: 2 }}>
+                                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {isPlayerHost && (
+                                              <Chip 
+                                                size="small" 
+                                                label="Host" 
+                                                color="primary" 
+                                                variant="outlined"
+                                                icon={<EmojiEvents fontSize="small" />}
+                                                sx={{ mr: 1, height: 22 }}
+                                              />
+                                            )}
+                                            <Typography 
+                                              variant="subtitle1" 
+                                              component="span" 
+                                              fontWeight={isCurrentPlayer ? 700 : 500}
+                                              color={isPlayerWolf ? 'secondary.main' : 'text.primary'}
+                                            >
+                                              {username}
+                                              {isCurrentPlayer && ' (You)'}
+                                            </Typography>
+                                          </Box>
+                                          
+                                          {isPlayerWolf && (
+                                            <Chip 
+                                              size="small" 
+                                              label="Wolf" 
+                                              color="secondary" 
+                                              icon={<PetsRounded fontSize="small" />}
+                                              sx={{ mt: 0.5 }}
+                                            />
+                                          )}
+                                          
+                                          {isPackRankerPlayer && (
+                                            <Chip 
+                                              size="small" 
+                                              label="Pack Ranker" 
+                                              color="primary" 
+                                              icon={<FormatListNumbered fontSize="small" />}
+                                              sx={{ mt: 0.5 }}
+                                            />
+                                          )}
+                                        </Box>
+                                      </Box>
+                                      
+                                      <Box sx={{ textAlign: 'right' }}>
+                                        <Chip 
+                                          label={`Score: ${player.score || 0}`}
+                                          color="default"
+                                          variant="outlined"
+                                          sx={{ 
+                                            fontWeight: 600,
+                                            borderColor: wolfTheme.palette.primary.light
+                                          }}
+                                        />
+                                      </Box>
+                                    </Box>
+                                  </CardContent>
+                                </Card>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      ) : (
+                        <Paper 
+                          elevation={0} 
+                          sx={{ 
+                            p: 3, 
+                            textAlign: 'center',
+                            bgcolor: alpha(wolfTheme.palette.primary.light, 0.05),
+                            borderRadius: 2,
+                            border: `1px dashed ${wolfTheme.palette.primary.light}`
+                          }}
+                        >
+                          <Typography color="text.secondary">
+                            No players in the game yet
+                          </Typography>
+                        </Paper>
                       )}
-                      <span>{player.user__username || player.username}</span>
-                      {(player.user__username === wolfId || player.username === wolfId) && (
-                        <span className="wolf-label">(Wolf)</span>
-                      )}
-                    </div>
-                    <div className="player-score">
-                      Score: {player.score || 0}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="no-players-message">No players in the game yet</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+                    </Box>
+                    </Paper>
+              </Fade>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
     </DndProvider>
-  );
+  </ThemeProvider>
+);
 }
 
 export default GamePlay;
