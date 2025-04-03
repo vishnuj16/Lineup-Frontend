@@ -438,7 +438,7 @@ function GamePlay({ user, roomData, onLogout, onLeaveLobby }) {
             setError(data.message || 'An error occurred');
             break;
           // Add this to the existing switch case in the socket.onmessage handler
-          case 'game_end_message':
+          case 'game_end':
             handleGameEnd(data);
             break;
           default:
