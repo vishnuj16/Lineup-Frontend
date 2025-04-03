@@ -25,63 +25,83 @@ import {
   EmojiEmotions as EmojiIcon,
   ContentCopy as ContentCopyIcon,
   Close as CloseIcon,
+  Pets as PetsIcon,
 } from '@mui/icons-material';
 import { keyframes } from '@mui/system';
 
-// Create a fun, quirky theme
+// Create a wolf-themed, fun, quirky theme
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6200ea', // Vibrant purple
+      main: '#4A2545', // Deep purple (wolf night sky)
+      light: '#6e3b68',
+      dark: '#301731',
     },
     secondary: {
-      main: '#00e676', // Bright green
+      main: '#F6C026', // Amber yellow (wolf eyes)
+      light: '#FFD54F',
+      dark: '#C79A00',
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: '#141D26', // Dark blue-grey
+      paper: '#243447', // Darker blue-grey
     },
     error: {
-      main: '#ff3d00',
+      main: '#FF5252',
     },
     success: {
-      main: '#00c853',
+      main: '#66BB6A',
     },
     info: {
-      main: '#00b0ff',
+      main: '#29B6F6',
     },
     warning: {
-      main: '#ffab00',
+      main: '#FFA726',
+    },
+    text: {
+      primary: '#E0E0E0',
+      secondary: '#AAAAAA',
     },
   },
   typography: {
-    fontFamily: '"Poppins", "Roboto", "Arial", sans-serif',
+    fontFamily: '"Quicksand", "Poppins", "Roboto", sans-serif',
     h1: {
       fontWeight: 700,
     },
     h3: {
       fontWeight: 600,
     },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 16,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
+          borderRadius: 24,
           textTransform: 'none',
           fontWeight: 600,
-          padding: '8px 16px',
+          padding: '10px 20px',
+          transition: 'all 0.3s ease',
         },
         containedPrimary: {
-          boxShadow: '0 4px 10px rgba(98, 0, 234, 0.3)',
+          background: 'linear-gradient(135deg, #4A2545 0%, #6e3b68 100%)',
+          boxShadow: '0 6px 12px rgba(74, 37, 69, 0.4)',
           '&:hover': {
-            boxShadow: '0 6px 15px rgba(98, 0, 234, 0.4)',
+            boxShadow: '0 8px 16px rgba(74, 37, 69, 0.6)',
+            transform: 'translateY(-2px)',
           },
         },
         containedSecondary: {
-          boxShadow: '0 4px 10px rgba(0, 230, 118, 0.3)',
+          background: 'linear-gradient(135deg, #F6C026 0%, #FFD54F 100%)',
+          boxShadow: '0 6px 12px rgba(246, 192, 38, 0.4)',
           '&:hover': {
-            boxShadow: '0 6px 15px rgba(0, 230, 118, 0.4)',
+            boxShadow: '0 8px 16px rgba(246, 192, 38, 0.6)',
+            transform: 'translateY(-2px)',
           },
         },
       },
@@ -89,8 +109,12 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+          borderRadius: 24,
+          boxShadow: '0 12px 30px rgba(0, 0, 0, 0.3)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(5px)',
+          background: 'linear-gradient(145deg, rgba(36, 52, 71, 0.9) 0%, rgba(20, 29, 38, 0.8) 100%)',
         },
       },
     },
@@ -98,6 +122,29 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 16,
+          background: 'rgba(36, 52, 71, 0.9)',
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: 'linear-gradient(90deg, #4A2545 0%, #301731 100%)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          border: '2px solid #F6C026',
         },
       },
     },
@@ -135,17 +182,71 @@ const spin = keyframes`
   }
 `;
 
+const howl = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  50% {
+    transform: scale(1.15) rotate(-3deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+// Wolf paw print SVG for background
+const WolfPawBackground = () => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: -1,
+      opacity: 0.05,
+      pointerEvents: 'none',
+      background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='%23FFFFFF' d='M30,20 C35,15 40,15 45,20 C50,25 50,30 45,35 C40,40 35,40 30,35 C25,30 25,25 30,20 Z M20,30 C25,25 30,25 35,30 C40,35 40,40 35,45 C30,50 25,50 20,45 C15,40 15,35 20,30 Z M40,30 C45,25 50,25 55,30 C60,35 60,40 55,45 C50,50 45,50 40,45 C35,40 35,35 40,30 Z M30,40 C35,35 40,35 45,40 C50,45 50,50 45,55 C40,60 35,60 30,55 C25,50 25,45 30,40 Z'/%3E%3C/svg%3E") repeat`,
+    }}
+  />
+);
+
+// Moon image for background
+const MoonBackground = () => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: '5%',
+      right: '5%',
+      width: '150px',
+      height: '150px',
+      borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(255,235,170,0.7) 0%, rgba(255,235,170,0) 70%)',
+      boxShadow: '0 0 60px 30px rgba(255,235,170,0.3)',
+      zIndex: -1,
+      opacity: 0.8,
+      pointerEvents: 'none',
+    }}
+  />
+);
+
 function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
   const { roomCode } = useParams();
   const navigate = useNavigate();
   const [players, setPlayers] = useState(roomData?.current_players || []);
-  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isHost, setIsHost] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [roomInfo, setRoomInfo] = useState({});
   const [showCopiedSnackbar, setShowCopiedSnackbar] = useState(false);
+  const [showHowl, setShowHowl] = useState(false);
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
@@ -185,7 +286,6 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
       console.log('WebSocket connection established');
       setWsConnected(true);
       reconnectAttemptsRef.current = 0;
-      setMessages(prev => [...prev, { type: 'system', content: 'Connected to game lobby' }]);
       
       // Send player_joined message when connection is established
       socket.send(JSON.stringify({ 
@@ -227,15 +327,9 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
     socket.onclose = (event) => {
       console.log('WebSocket connection closed', event);
       setWsConnected(false);
-      setMessages(prev => [...prev, { type: 'system', content: 'Disconnected from game lobby' }]);
       
       // Attempt to reconnect if not closed intentionally (code 1000) and not redirecting to game
       if (event.code !== 1000 && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-        setMessages(prev => [...prev, { 
-          type: 'system', 
-          content: `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${MAX_RECONNECT_ATTEMPTS})...` 
-        }]);
-        
         reconnectTimeoutRef.current = setTimeout(() => {
           reconnectAttemptsRef.current += 1;
           connectWebSocket();
@@ -247,7 +341,6 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
-      setMessages(prev => [...prev, { type: 'error', content: 'Error connecting to game lobby' }]);
     };
   }, [roomCode, user?.username]);
 
@@ -256,10 +349,6 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
     setPlayers(prevPlayers => {
         const playerExists = prevPlayers.some(p => p.user__username === playerName);
         if (!playerExists) {
-            setMessages(prev => [...prev, { 
-                type: 'player_joined', 
-                content: `${playerName} has joined the game` 
-              }]);
           return [...prevPlayers, { user__username: playerName }];
         }
         return prevPlayers;
@@ -267,20 +356,10 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
   }, []);
 
   const handlePlayerLeft = useCallback((playerName) => {
-    setMessages(prev => [...prev, { 
-      type: 'player_left', 
-      content: `${playerName} has left the game` 
-    }]);
-    
     setPlayers(prevPlayers => prevPlayers.filter(p => p.user__username !== playerName));
   }, []);
 
   const handleGameStart = useCallback((data) => {
-    setMessages(prev => [...prev, { 
-      type: 'game_start', 
-      content: data.message || 'Game is starting!' 
-    }]);
-    
     // Close the current WebSocket connection with normal closure code
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.close(1000);
@@ -319,9 +398,18 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
       }
     }, 30000); // Every 30 seconds
 
+    // Howl animation at random intervals
+    const howlInterval = setInterval(() => {
+      if (Math.random() > 0.7) { // 30% chance of showing the howl
+        setShowHowl(true);
+        setTimeout(() => setShowHowl(false), 2000);
+      }
+    }, 10000);
+
     // Cleanup function
     return () => {
       clearInterval(pingInterval);
+      clearInterval(howlInterval);
       
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -353,7 +441,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
       if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify({ 
           type: 'game_start',
-          message: 'The host has started the game!'
+          message: 'The pack leader has started the hunt!'
         }));
       }
     } catch (error) {
@@ -391,30 +479,22 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
   };
 
   const getRandomAvatarColor = (username) => {
-    // Generate a consistent color based on username
+    // Generate wolf-themed avatar colors
     const colors = [
-      '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
-      '#2196f3', '#03a9f4', '#00bcd4', '#009688', 
-      '#4caf50', '#8bc34a', '#cddc39', '#ffc107'
+      '#4A2545', // Deep purple
+      '#614051', // Muted purple
+      '#301731', // Dark purple
+      '#594157', // Mauve
+      '#433545', // Slate purple
+      '#5D4361', // Medium purple
+      '#382436', // Eggplant
+      '#503A4B', // Plum
+      '#6e3b68', // Lighter purple
+      '#3F2E4B'  // Dark violet
     ];
     
     const charSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
     return colors[charSum % colors.length];
-  };
-
-  const getMessageIcon = (type) => {
-    switch(type) {
-      case 'player_joined':
-        return <SuccessIcon sx={{ color: 'success.main' }} />;
-      case 'player_left':
-        return <ExitIcon sx={{ color: 'warning.main' }} />;
-      case 'game_start':
-        return <GameIcon sx={{ color: 'info.main' }} />;
-      case 'error':
-        return <ErrorIcon sx={{ color: 'error.main' }} />;
-      default:
-        return <InfoIcon sx={{ color: 'primary.main' }} />;
-    }
   };
 
   return (
@@ -422,30 +502,64 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
       <Box 
         sx={{ 
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, rgba(98,0,234,0.05) 0%, rgba(0,230,118,0.05) 100%)',
+          background: 'linear-gradient(135deg, #141D26 0%, #1D2B3A 100%)',
+          backgroundSize: 'cover',
+          backgroundAttachment: 'fixed',
           pt: 8, // To account for the AppBar
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* AppBar */}
-        <AppBar position="fixed" color="primary" elevation={3}>
+        {/* Decorative backgrounds */}
+        <WolfPawBackground />
+        <MoonBackground />
+        
+        {/* Howling wolf animation */}
+        {showHowl && (
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: '5%',
+              left: '2%',
+              width: '100px',
+              height: '100px',
+              zIndex: 10,
+              opacity: 0.8,
+              animation: `${howl} 2s ease-in-out`,
+            }}
+          >
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M50,20 C60,15 70,25 75,40 C80,55 85,60 90,65 L80,75 C70,65 65,60 60,50 C55,40 55,35 50,30 C45,35 45,40 40,50 C35,60 30,65 20,75 L10,65 C15,60 20,55 25,40 C30,25 40,15 50,20 Z"
+                fill="#F6C026"
+                opacity="0.8"
+              />
+              <circle cx="40" cy="35" r="2" fill="#000" />
+              <circle cx="60" cy="35" r="2" fill="#000" />
+            </svg>
+          </Box>
+        )}
+
+        {/* AppBar with Wolf Theme */}
+        <AppBar position="fixed" elevation={3}>
           <Toolbar>
             <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
-              <CasinoIcon sx={{ fontSize: 28 }} />
+              <PetsIcon sx={{ fontSize: 28 }} />
             </IconButton>
             
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
-                {roomData?.room_name || 'Game Lobby'}
+                {roomData?.room_name || "Wolf's Den"}
                 <Chip 
-                  label={`Code: ${roomCode}`} 
+                  label={`Pack Code: ${roomCode}`} 
                   size="small" 
                   variant="outlined" 
                   onClick={copyRoomCode} 
                   sx={{ 
                     ml: 1, 
                     color: 'white', 
-                    borderColor: 'rgba(255,255,255,0.5)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    borderColor: 'rgba(246, 192, 38, 0.7)',
+                    '&:hover': { backgroundColor: 'rgba(246, 192, 38, 0.1)' }
                   }} 
                 />
               </Box>
@@ -464,14 +578,14 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
               </Zoom>
               
               <Button 
-                variant="outlined" 
-                color="inherit" 
+                variant="contained" 
+                color="secondary" 
                 startIcon={<ExitIcon />} 
                 onClick={handleLeaveRoom}
                 disabled={loading}
-                sx={{ mr: 1, borderColor: 'rgba(255,255,255,0.5)' }}
+                sx={{ mr: 1 }}
               >
-                Leave
+                Leave Pack
               </Button>
               
               <Button 
@@ -488,67 +602,69 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
         </AppBar>
         
         {/* Main Content */}
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Container maxWidth="xl" sx={{ mt: 4, pb: 4 }}>
           {/* Error Message */}
           {error && (
-            <Paper 
-              sx={{ 
-                p: 2, 
-                mb: 3, 
-                border: '1px solid', 
-                borderColor: 'error.main',
-                bgcolor: 'error.light',
-                color: 'error.contrastText',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-              elevation={0}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <ErrorIcon sx={{ mr: 1 }} />
-                <Typography variant="body1">{error}</Typography>
-              </Box>
-              {!wsConnected && (
-                <Button 
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => {
-                    reconnectAttemptsRef.current = 0;
-                    setError('');
-                    connectWebSocket();
-                  }}
-                >
-                  Reconnect
-                </Button>
-              )}
-            </Paper>
+            <Fade in={Boolean(error)}>
+              <Paper 
+                sx={{ 
+                  p: 2, 
+                  mb: 3, 
+                  border: '1px solid', 
+                  borderColor: 'error.main',
+                  bgcolor: 'rgba(255, 82, 82, 0.15)',
+                  color: 'error.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+                elevation={0}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ErrorIcon sx={{ mr: 1 }} />
+                  <Typography variant="body1">{error}</Typography>
+                </Box>
+                {!wsConnected && (
+                  <Button 
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<RefreshIcon />}
+                    onClick={() => {
+                      reconnectAttemptsRef.current = 0;
+                      setError('');
+                      connectWebSocket();
+                    }}
+                  >
+                    Reconnect
+                  </Button>
+                )}
+              </Paper>
+            </Fade>
           )}
 
-          {/* Main Grid Layout */}
+          {/* Main Content Cards in a Full-Width Layout */}
           <Grid container spacing={3}>
-            {/* Left Panel - Player List */}
+            {/* Left Section - Pack Members (Players) */}
             <Grid item xs={12} md={4}>
               <Zoom in={true} style={{ transitionDelay: '100ms' }}>
-                <Card sx={{ height: '100%' }}>
+                <Card>
                   <CardContent>
                     <Box sx={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      mb: 2,
+                      mb: 3,
                       pb: 2,
-                      borderBottom: '1px solid',
-                      borderColor: 'divider'
+                      borderBottom: '2px solid',
+                      borderColor: 'rgba(246, 192, 38, 0.3)'
                     }}>
-                      <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
+                      <PetsIcon sx={{ mr: 1, color: 'secondary.main' }} />
                       <Typography variant="h6" component="h3">
-                        Players ({players.length}/{roomData?.max_players || 10})
+                        Wolf Pack ({players.length}/{roomData?.max_players || 10})
                       </Typography>
                     </Box>
                     
-                    <List sx={{ p: 0 }}>
+                    <List sx={{ p: 1 }}>
                       {players.map((player, index) => (
                         <Fade 
                           key={index} 
@@ -559,20 +675,25 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                         >
                           <ListItem 
                             sx={{ 
-                              borderRadius: 2,
-                              mb: 1,
-                              bgcolor: player.user__username === user.username ? 'rgba(98, 0, 234, 0.08)' : 'transparent',
+                              mb: 1.5,
+                              bgcolor: player.user__username === user.username ? 'rgba(246, 192, 38, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                               transition: 'all 0.3s ease',
                               '&:hover': {
-                                bgcolor: 'rgba(98, 0, 234, 0.15)',
-                              }
+                                bgcolor: 'rgba(246, 192, 38, 0.2)',
+                                transform: 'translateX(5px)',
+                              },
+                              borderLeft: player.user__username === user.username ? 
+                                '3px solid #F6C026' : '1px solid rgba(255, 255, 255, 0.1)',
+                              px: 2
                             }}
                           >
                             <ListItemAvatar>
                               <Avatar 
                                 sx={{ 
                                   bgcolor: getRandomAvatarColor(player.user__username),
-                                  animation: player.user__username === user.username ? `${bounce} 2s infinite` : 'none'
+                                  animation: player.user__username === user.username ? `${bounce} 3s infinite` : 'none',
+                                  boxShadow: player.user__username === user.username ? 
+                                    '0 0 10px rgba(246, 192, 38, 0.5)' : 'none',
                                 }}
                               >
                                 {player.user__username?.charAt(0).toUpperCase()}
@@ -580,7 +701,10 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                             </ListItemAvatar>
                             <ListItemText 
                               primary={
-                                <Typography sx={{ fontWeight: player.user__username === user.username ? 600 : 400 }}>
+                                <Typography sx={{ 
+                                  fontWeight: player.user__username === user.username ? 600 : 400,
+                                  fontSize: player.user__username === user.username ? '1.1rem' : '1rem',
+                                }}>
                                   {player.user__username}
                                   {player.user__username === user.username && " (You)"}
                                 </Typography>
@@ -593,8 +717,8 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                                   display: 'flex',
                                   alignItems: 'center'
                                 }}>
-                                  <CasinoIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                  Host
+                                  <PetsIcon fontSize="small" sx={{ mr: 0.5 }} />
+                                  Alpha Wolf
                                 </Box> : null
                               }
                             />
@@ -604,14 +728,14 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                       
                       {players.length === 0 && (
                         <Box sx={{ 
-                          py: 4, 
+                          py: 6, 
                           display: 'flex', 
                           flexDirection: 'column', 
                           alignItems: 'center',
                           color: 'text.secondary' 
                         }}>
-                          <EmojiIcon sx={{ fontSize: 40, mb: 2, opacity: 0.6 }} />
-                          <Typography>Waiting for players to join...</Typography>
+                          <EmojiIcon sx={{ fontSize: 60, mb: 2, opacity: 0.4 }} />
+                          <Typography>Waiting for wolves to join the pack...</Typography>
                         </Box>
                       )}
                     </List>
@@ -620,85 +744,48 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
               </Zoom>
             </Grid>
 
-            {/* Right Panel - Activity Feed & Controls */}
+            {/* Middle Section - Game Controls & Pack Information */}
             <Grid item xs={12} md={8}>
               <Stack spacing={3}>
-                {/* Activity Feed */}
-                <Zoom in={true} style={{ transitionDelay: '200ms' }}>
-                  <Card>
-                    <CardContent>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mb: 2,
-                        pb: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'divider'
-                      }}>
-                        <InfoIcon sx={{ mr: 1, color: 'info.main' }} />
-                        <Typography variant="h6" component="h3">
-                          Lobby Activity
-                        </Typography>
-                      </Box>
-                      
-                      <Box sx={{ maxHeight: 200, overflowY: 'auto', p: 1 }}>
-                        {messages.map((msg, index) => (
-                          <Fade key={index} in={true}>
-                            <Box sx={{ 
-                              display: 'flex',
-                              alignItems: 'center',
-                              mb: 1,
-                              p: 1,
-                              borderRadius: 1,
-                              bgcolor: 'background.default',
-                            }}>
-                              {getMessageIcon(msg.type)}
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  ml: 1,
-                                  color: msg.type === 'error' ? 'error.main' : 
-                                        msg.type === 'player_joined' ? 'success.main' : 
-                                        msg.type === 'player_left' ? 'warning.main' : 
-                                        msg.type === 'game_start' ? 'info.main' : 'text.primary'
-                                }}
-                              >
-                                {msg.content}
-                              </Typography>
-                            </Box>
-                          </Fade>
-                        ))}
-                        
-                        {messages.length === 0 && (
-                          <Box sx={{ 
-                            py: 4, 
-                            display: 'flex', 
-                            justifyContent: 'center',
-                            color: 'text.secondary' 
-                          }}>
-                            <Typography>Waiting for activity...</Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Zoom>
-
                 {/* Game Controls */}
-                <Zoom in={true} style={{ transitionDelay: '300ms' }}>
-                  <Card>
-                    <CardContent>
+                <Zoom in={true} style={{ transitionDelay: '200ms' }}>
+                  <Card sx={{ 
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}>
+                    {/* Wolf silhouette background */}
+                    <Box 
+                      sx={{
+                        position: 'absolute',
+                        top: '-10%',
+                        right: '-5%',
+                        width: '200px',
+                        height: '200px',
+                        opacity: 0.07,
+                        zIndex: 0,
+                        transform: 'rotate(10deg)',
+                      }}
+                    >
+                      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M50,20 C60,15 70,25 75,40 C80,55 85,60 90,65 L80,75 C70,65 65,60 60,50 C55,40 55,35 50,30 C45,35 45,40 40,50 C35,60 30,65 20,75 L10,65 C15,60 20,55 25,40 C30,25 40,15 50,20 Z"
+                          fill="#FFFFFF"
+                        />
+                      </svg>
+                    </Box>
+                    
+                    <CardContent sx={{ position: 'relative', zIndex: 1 }}>
                       <Box sx={{ 
                         display: 'flex', 
                         alignItems: 'center', 
-                        mb: 2,
+                        mb: 3,
                         pb: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'divider'
+                        borderBottom: '2px solid',
+                        borderColor: 'rgba(246, 192, 38, 0.3)'
                       }}>
                         <ControllerIcon sx={{ mr: 1, color: 'secondary.main' }} />
                         <Typography variant="h6" component="h3">
-                          Game Controls
+                          Wolf Hunt Controls
                         </Typography>
                       </Box>
                       
@@ -706,12 +793,13 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                         display: 'flex', 
                         flexDirection: 'column', 
                         alignItems: 'center',
-                        p: 2
+                        p: 4,
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%)',
                       }}>
                         {isHost ? (
                           <>
-                            <Typography sx={{ mb: 2, textAlign: 'center' }}>
-                              As the host, you can start the game when all players are ready.
+                            <Typography variant="h5" sx={{ mb: 3, textAlign: 'center', fontWeight: 500 }}>
+                              As the Alpha Wolf, it's your call to begin the hunt!
                             </Typography>
                             
                             <Button
@@ -719,8 +807,8 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                               color="secondary"
                               size="large"
                               startIcon={<GameIcon sx={{ 
-                                animation: (!loading && players.length >= 2 && wsConnected) ? 
-                                  `${spin} 4s infinite linear` : 'none' 
+                                animation: (!loading && players.length >= 2 && wsConnected)
+                                ? `${spin} 4s infinite linear` : 'none' 
                               }} />}
                               onClick={handleStartGame}
                               disabled={loading || players.length < 2 || !wsConnected}
@@ -734,9 +822,9 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                               {loading ? (
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                   <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                                  Starting Game...
+                                  Starting Hunt...
                                 </Box>
-                              ) : 'Start Game'}
+                              ) : 'Begin the Hunt'}
                             </Button>
                             
                             {players.length < 2 && (
@@ -745,7 +833,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                                 color="error" 
                                 sx={{ mt: 2 }}
                               >
-                                At least 2 players are required to start the game
+                                At least 2 wolves are needed for the hunt
                               </Typography>
                             )}
                             
@@ -755,7 +843,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                                 color="error"
                                 sx={{ mt: 2 }}
                               >
-                                Cannot start game while disconnected
+                                Cannot start while disconnected from the pack
                               </Typography>
                             )}
                           </>
@@ -773,7 +861,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                               sx={{ mb: 2 }}
                             />
                             <Typography>
-                              Waiting for the host to start the game...
+                              Awaiting the Alpha's call to begin the hunt...
                             </Typography>
                           </Box>
                         )}
@@ -782,7 +870,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                   </Card>
                 </Zoom>
 
-                {/* Room Info */}
+                {/* Pack Information */}
                 <Zoom in={true} style={{ transitionDelay: '400ms' }}>
                   <Card>
                     <CardContent>
@@ -791,12 +879,12 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                         alignItems: 'center', 
                         mb: 2,
                         pb: 2,
-                        borderBottom: '1px solid',
-                        borderColor: 'divider'
+                        borderBottom: '2px solid',
+                        borderColor: 'rgba(246, 192, 38, 0.3)'
                       }}>
-                        <CasinoIcon sx={{ mr: 1, color: 'primary.main' }} />
+                        <InfoIcon sx={{ mr: 1, color: 'secondary.main' }} />
                         <Typography variant="h6" component="h3">
-                          Room Information
+                          Wolf Pack Information
                         </Typography>
                       </Box>
                       
@@ -807,11 +895,12 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                             sx={{ 
                               p: 2, 
                               bgcolor: 'background.default',
-                              height: '100%'
+                              height: '100%',
+                              borderRadius: 3
                             }}
                           >
-                            <Typography variant="subtitle2" color="text.secondary">Room Name</Typography>
-                            <Typography variant="body1" sx={{ mt: 1 }}>{roomData?.room_name}</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">Pack Name</Typography>
+                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>{roomInfo?.room_name || roomData?.room_name}</Typography>
                           </Paper>
                         </Grid>
                         
@@ -821,27 +910,30 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                             sx={{ 
                               p: 2, 
                               bgcolor: 'background.default',
-                              height: '100%'
+                              height: '100%',
+                              borderRadius: 3
                             }}
                           >
-                            <Typography variant="subtitle2" color="text.secondary">Max Players</Typography>
-                            <Typography variant="body1" sx={{ mt: 1 }}>
-                              {roomData?.max_players || 10}
+                            <Typography variant="subtitle2" color="text.secondary">Pack Size Limit</Typography>
+                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
+                              {roomData?.max_players || roomInfo?.max_players || 10} wolves
                             </Typography>
                           </Paper>
                         </Grid>
                         
                         <Grid item xs={12}>
                           <Paper 
-                            variant="outlined" 
                             sx={{ 
-                              p: 2, 
-                              bgcolor: 'primary.light',
+                              p: 3, 
+                              bgcolor: 'primary.dark',
                               color: 'primary.contrastText',
-                              border: 'none'
+                              border: 'none',
+                              boxShadow: '0 6px 12px rgba(0, 0, 0, 0.3)',
+                              borderRadius: 3
                             }}
+                            elevation={3}
                           >
-                            <Typography variant="subtitle2">Share this code with friends:</Typography>
+                            <Typography variant="subtitle2">Share this code with your pack:</Typography>
                             <Box sx={{ 
                               display: 'flex', 
                               alignItems: 'center', 
@@ -852,8 +944,9 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                                 variant="h4" 
                                 sx={{ 
                                   fontWeight: 'bold',
-                                  letterSpacing: 2,
-                                  fontFamily: 'monospace'
+                                  letterSpacing: 3,
+                                  fontFamily: 'monospace',
+                                  textShadow: '0 2px 4px rgba(0,0,0,0.5)'
                                 }}
                               >
                                 {roomCode}
@@ -864,15 +957,18 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                                   onClick={copyRoomCode}
                                   color="inherit"
                                   sx={{ 
-                                    bgcolor: 'rgba(255,255,255,0.2)',
+                                    bgcolor: 'rgba(246, 192, 38, 0.2)',
                                     '&:hover': {
-                                      bgcolor: 'rgba(255,255,255,0.3)',
-                                    }
+                                      bgcolor: 'rgba(246, 192, 38, 0.3)',
+                                      transform: 'translateY(-2px)'
+                                    },
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                                   }}
                                 >
                                   <ContentCopyIcon />
                                 </IconButton>
-                                </Tooltip>
+                              </Tooltip>
                             </Box>
                           </Paper>
                         </Grid>
@@ -892,7 +988,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
         autoHideDuration={3000}
         onClose={() => setShowCopiedSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        message="Room code copied to clipboard!"
+        message="Pack code copied to clipboard!"
         action={
           <IconButton
             size="small"

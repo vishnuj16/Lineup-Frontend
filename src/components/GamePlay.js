@@ -41,7 +41,8 @@ import {
   FormatListNumbered,
   KeyboardArrowRight,
   KeyboardReturn,
-  PlayArrow
+  PlayArrow,
+  NightlightRound,
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 
@@ -49,7 +50,7 @@ import { alpha } from '@mui/material/styles';
 import ConnectionStatus from './ConnectionStatus';
 import RankingContainer from './RankingContainer';
 import {StatusBanner, Timer} from './TimeAndStatus';
-import ResultsDisplay from './ResultsDisplay';
+// import ResultsDisplay from './ResultsDisplay';
 
 // Import CSS with override styling
 import './GamePlay.css';
@@ -57,109 +58,150 @@ import './GamePlay.css';
 // Create a custom wolf theme
 const wolfTheme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#4E387E', // Deep purple for wolf theme
-      light: '#8A6BBE',
-      dark: '#2A1B54',
-      contrastText: '#fff',
+      main: '#7C5DF9', // Vibrant purple for primary actions
+      light: '#9C81FF',
+      dark: '#5D3FD3',
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#FF6B35', // Orange accent for wolf actions
-      light: '#FF8C5A',
-      dark: '#CC4A1B',
-      contrastText: '#fff',
+      main: '#FF7E5F', // Warm orange for accents and wolf elements
+      light: '#FFA183',
+      dark: '#D65A3F',
+      contrastText: '#FFFFFF',
     },
     background: {
-      default: '#F5F3FF', // Light purple background
-      paper: '#FFFFFF',
+      default: '#0F0D1F', // Deep rich blue-black background
+      paper: '#1A172E', // Slightly lighter variant for cards
     },
     text: {
-      primary: '#333333',
-      secondary: '#666666',
+      primary: '#F0F0FF', // Light lavender text
+      secondary: '#B9B8CE', // Muted purple-gray for secondary text
     },
     error: {
-      main: '#D32F2F',
+      main: '#FF5C77', // Bright pink-red for errors
     },
     warning: {
-      main: '#FFC107',
-    },
-    info: {
-      main: '#29B6F6',
+      main: '#FFB547', // Gold-yellow for warnings
     },
     success: {
-      main: '#43A047',
+      main: '#5CDB95', // Minty green for success
+    },
+    info: {
+      main: '#64D2FF', // Bright sky blue for info
     },
   },
   typography: {
-    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: "'Quicksand', 'Roboto', 'Helvetica', 'Arial', sans-serif",
     h1: {
+      fontWeight: 700,
+      letterSpacing: '-0.02em',
+    },
+    h2: {
+      fontWeight: 700,
+      letterSpacing: '-0.02em',
+    },
+    h3: {
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },
-    h2: {
-      fontWeight: 600,
+    h4: {
+      fontWeight: 700,
       letterSpacing: '-0.01em',
     },
-    h3: {
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
       fontWeight: 600,
     },
     button: {
       fontWeight: 600,
+      letterSpacing: '0.03em',
       textTransform: 'none',
     },
+  },
+  shape: {
+    borderRadius: 16,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 50,
           padding: '10px 24px',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 14px 0 rgba(124, 93, 249, 0.39)',
           '&:hover': {
             transform: 'translateY(-2px)',
-            boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 6px 20px 0 rgba(124, 93, 249, 0.45)',
           },
+          transition: 'all 0.3s ease',
         },
         containedPrimary: {
-          background: 'linear-gradient(135deg, #4E387E 0%, #6A4CAA 100%)',
+          background: 'linear-gradient(45deg, #7C5DF9 0%, #9C81FF 100%)',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #6B4CF5 0%, #8B6FFF 100%)',
+          },
         },
         containedSecondary: {
-          background: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%)',
+          background: 'linear-gradient(45deg, #FF7E5F 0%, #FFA183 100%)',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #FF6D4C 0%, #FF8F6D 100%)',
+          },
+        },
+        outlined: {
+          borderWidth: 2,
+          '&:hover': {
+            borderWidth: 2,
+          },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          backgroundImage: 'linear-gradient(to bottom right, rgba(124, 93, 249, 0.05), rgba(255, 126, 95, 0.03))',
+          boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.5)',
+          borderRadius: 24,
+        },
+        elevation1: {
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+        },
+        elevation2: {
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)',
+        },
+        elevation3: {
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.35)',
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
+          overflow: 'visible',
           borderRadius: 16,
-          overflow: 'hidden',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          '&:hover': {
-            boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
-          },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          fontWeight: 500,
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          border: '2px solid #7C5DF9',
+          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
         },
       },
     },
   },
 });
+
 
 // Ensure CSS animations work with Material UI
 const styles = {
@@ -209,134 +251,352 @@ const styles = {
 };
 
 // Custom styled components
-const WolfAvatar = ({ isWolf, username }) => (
-  <Avatar 
-    sx={{ 
-      bgcolor: isWolf ? 'secondary.main' : 'primary.light',
-      width: 56, 
-      height: 56,
-      animation: isWolf ? 'pulse 2s infinite' : 'none',
-      boxShadow: isWolf ? '0 0 10px rgba(255,107,53,0.7)' : 'none',
-      border: isWolf ? '3px solid #FF6B35' : 'none',
-      fontWeight: 'bold',
-      fontSize: '1.2rem',
-    }}
-  >
-    {isWolf ? <PetsRounded fontSize="large" /> : username.charAt(0).toUpperCase()}
-  </Avatar>
-);
+const WolfAvatar = ({ isWolf, username }) => {
+  const getInitials = (name) => {
+    return name.charAt(0).toUpperCase();
+  };
 
-// Enhanced connection status component
-const EnhancedConnectionStatus = ({ status }) => (
-  <Chip
-    icon={status === 'connected' ? 
-      <SignalWifiStatusbar4Bar sx={{ color: 'inherit' }} /> : 
-      <SignalWifiStatusbarConnectedNoInternet4 sx={{ color: 'inherit' }} />
+  const getColor = (name) => {
+    // Generate a unique hue based on the name
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    label={status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Disconnected'}
-    color={status === 'connected' ? 'success' : status === 'connecting' ? 'warning' : 'error'}
-    variant="outlined"
-    size="medium"
-    sx={{
-      fontWeight: 500,
-      px: 1,
-      '& .MuiChip-icon': {
-        animation: status === 'connecting' ? 'pulse 1.5s infinite' : 'none'
-      }
-    }}
-  />
-);
+    const hue = hash % 360;
+    return `hsl(${hue}, 70%, 65%)`;
+  };
 
-// Enhanced timer display
-const EnhancedTimer = ({ timeLeft, totalTime = 60 }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-    <TimerOutlined color="primary" sx={{ mr: 1 }} />
-    <Box sx={{ width: '100%', mr: 1 }}>
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        width: 50,
+        height: 50,
+      }}
+    >
+      <Avatar
+        sx={{
+          width: 50,
+          height: 50,
+          bgcolor: isWolf ? 'secondary.main' : getColor(username),
+          border: isWolf ? '3px solid' : '2px solid',
+          borderColor: isWolf ? 'secondary.light' : 'primary.light',
+          fontSize: 20,
+          fontWeight: 'bold',
+          boxShadow: isWolf 
+            ? '0 0 10px rgba(255, 126, 95, 0.5), 0 0 20px rgba(255, 126, 95, 0.3)'
+            : '0 4px 10px rgba(0, 0, 0, 0.2)',
+          animation: isWolf ? 'pulse 2s infinite' : 'none',
+          zIndex: 2,
+        }}
+      >
+        {getInitials(username)}
+      </Avatar>
+      
+      {/* Wolf ears if isWolf */}
+      {isWolf && (
+        <>
+          {/* Left ear */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -10,
+              left: 6,
+              width: 0,
+              height: 0,
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              borderBottom: '20px solid #FF7E5F',
+              transform: 'rotate(-20deg)',
+              zIndex: 1,
+            }}
+          />
+          {/* Right ear */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -10,
+              right: 6,
+              width: 0,
+              height: 0,
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              borderBottom: '20px solid #FF7E5F',
+              transform: 'rotate(20deg)',
+              zIndex: 1,
+            }}
+          />
+        </>
+      )}
+    </Box>
+  );
+};
+
+// Enhanced Timer Component
+const EnhancedTimer = ({ timeLeft }) => {
+  const percentage = (timeLeft / 60) * 100; // Assuming max time is 60 seconds
+  const color = timeLeft > 20 ? wolfTheme.palette.success.main 
+              : timeLeft > 10 ? wolfTheme.palette.warning.main 
+              : wolfTheme.palette.error.main;
+  
+  return (
+    <Box sx={{ position: 'relative', width: '100%', mt: 2, mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <TimerOutlined color="action" sx={{ mr: 1 }} />
+        <Typography variant="h6" fontWeight="bold">
+          Time Remaining: <span style={{ color }}>{timeLeft}s</span>
+        </Typography>
+      </Box>
       <LinearProgress 
         variant="determinate" 
-        value={(timeLeft / totalTime) * 100} 
-        color={timeLeft < 10 ? "error" : timeLeft < 20 ? "warning" : "primary"}
+        value={percentage} 
         sx={{ 
           height: 10, 
           borderRadius: 5,
+          bgcolor: alpha(color, 0.2),
           '& .MuiLinearProgress-bar': {
+            bgcolor: color,
             borderRadius: 5,
-            background: timeLeft < 10 
-              ? 'linear-gradient(90deg, #FF5252 0%, #FF1744 100%)' 
-              : timeLeft < 20 
-                ? 'linear-gradient(90deg, #FFD740 0%, #FFC107 100%)'
-                : 'linear-gradient(90deg, #4E387E 0%, #6A4CAA 100%)',
-          }
-        }}
+            background: `linear-gradient(90deg, ${alpha(color, 0.7)} 0%, ${color} 100%)`,
+          },
+        }} 
       />
     </Box>
-    <Box sx={{ width: 40 }}>
-      <Typography 
-        variant="body2" 
-        color={timeLeft < 10 ? "error" : timeLeft < 20 ? "warning.main" : "text.secondary"}
-        fontWeight="bold"
-        sx={{
-          animation: timeLeft < 10 ? 'pulse 1s infinite' : 'none'
-        }}
-      >
-        {timeLeft}s
-      </Typography>
-    </Box>
-  </Box>
-);
+  );
+};
 
-// Enhanced status banner
+// Enhanced Status Banner Component
 const EnhancedStatusBanner = ({ roundStatus, isWolf }) => {
-  let statusText = '';
-  let statusColor = '';
-  let statusIcon = null;
-
+  let message = '';
+  let bgColor = '';
+  let icon = null;
+  
   switch (roundStatus) {
     case 'waiting':
-      statusText = 'Waiting for next round';
-      statusColor = 'info';
-      statusIcon = <KeyboardReturn />;
+      message = 'Waiting for the next round to start...';
+      bgColor = alpha(wolfTheme.palette.info.main, 0.15);
+      icon = <NightlightRound sx={{ mr: 1, color: wolfTheme.palette.info.main }} />;
       break;
     case 'wolf_ranking':
-      statusText = isWolf ? 'Your turn to rank players!' : 'Wolf is ranking players';
-      statusColor = isWolf ? 'secondary' : 'warning';
-      statusIcon = <PetsRounded />;
+      message = isWolf 
+        ? 'You are the Wolf! Rank the players in your order' 
+        : 'The Wolf is ranking players...';
+      bgColor = alpha(wolfTheme.palette.secondary.main, 0.15);
+      icon = <PetsRounded sx={{ mr: 1, color: wolfTheme.palette.secondary.main }} />;
       break;
     case 'pack_ranking':
-      statusText = 'Pack ranker is ordering players';
-      statusColor = 'primary';
-      statusIcon = <FormatListNumbered />;
+      message = 'The Pack Leader is ranking players...';
+      bgColor = alpha(wolfTheme.palette.primary.main, 0.15);
+      icon = <FormatListNumbered sx={{ mr: 1, color: wolfTheme.palette.primary.main }} />;
       break;
     case 'results':
-      statusText = 'Round Results';
-      statusColor = 'success';
-      statusIcon = <EmojiEvents />;
+      message = 'Round Results';
+      bgColor = alpha(wolfTheme.palette.success.main, 0.15);
+      icon = <SportsScore sx={{ mr: 1, color: wolfTheme.palette.success.main }} />;
       break;
     default:
-      statusText = 'Unknown Status';
-      statusColor = 'default';
+      message = 'Loading game status...';
+      bgColor = alpha(wolfTheme.palette.info.main, 0.15);
   }
-
+  
   return (
-    <Grow in timeout={800}>
-      <Chip
-        icon={statusIcon}
-        label={statusText}
-        color={statusColor}
-        variant="filled"
-        size="large"
-        sx={{
-          py: 2,
-          px: 2,
-          fontSize: '1rem',
-          fontWeight: 600,
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          '& .MuiChip-label': {
-            px: 1
-          }
+    <Paper 
+      elevation={0} 
+      sx={{ 
+        py: 2, 
+        px: 3, 
+        width: '100%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        bgcolor: bgColor,
+        borderRadius: 3,
+        border: `1px dashed ${alpha(icon?.props?.color || wolfTheme.palette.info.main, 0.5)}`,
+      }}
+    >
+      {icon}
+      <Typography 
+        variant="h6" 
+        fontWeight="bold" 
+        sx={{ 
+          color: icon?.props?.color || 'info.main',
+          animation: roundStatus === 'wolf_ranking' && isWolf ? 'pulse 2s infinite' : 'none',
         }}
-      />
-    </Grow>
+      >
+        {message}
+      </Typography>
+    </Paper>
+  );
+};
+
+const ResultsDisplay = ({ wolfRanking, packRanking, packScore, question }) => {
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: 3, 
+          borderRadius: 4,
+          bgcolor: alpha(wolfTheme.palette.success.main, 0.05),
+          border: `1px solid ${alpha(wolfTheme.palette.success.main, 0.2)}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" fontWeight="bold" color="success.main">
+            Round Results
+          </Typography>
+          <Chip 
+            label={`Pack Score: ${packScore}%`} 
+            color="success"
+            sx={{ fontWeight: 'bold', p: 0.5 }}
+          />
+        </Box>
+        
+        <Divider sx={{ mb: 3 }} />
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Box 
+              sx={{ 
+                p: 2, 
+                borderRadius: 3, 
+                bgcolor: alpha(wolfTheme.palette.secondary.main, 0.1),
+                border: `1px dashed ${wolfTheme.palette.secondary.main}`,
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold" color="secondary.main" gutterBottom>
+                🐺 Wolf's Ranking
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                {wolfRanking.map((player, index) => (
+                  <Paper 
+                    key={player.id} 
+                    sx={{ 
+                      p: 1.5, 
+                      mb: 1.5, 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      bgcolor: alpha(wolfTheme.palette.background.paper, 0.7),
+                      borderLeft: `4px solid ${wolfTheme.palette.secondary.main}`,
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: wolfTheme.palette.secondary.dark,
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        width: 32,
+                        height: 32,
+                        fontSize: 16,
+                        mr: 2,
+                      }}
+                    >
+                      {index + 1}
+                    </Avatar>
+                    <Typography variant="body1" fontWeight="medium">
+                      {player.username}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            </Box>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Box 
+              sx={{ 
+                p: 2, 
+                borderRadius: 3, 
+                bgcolor: alpha(wolfTheme.palette.primary.main, 0.1),
+                border: `1px dashed ${wolfTheme.palette.primary.main}`,
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
+                🐾 Pack's Ranking
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                {packRanking.map((player, index) => (
+                  <Paper 
+                    key={player.id} 
+                    sx={{ 
+                      p: 1.5, 
+                      mb: 1.5, 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      bgcolor: alpha(wolfTheme.palette.background.paper, 0.7),
+                      borderLeft: `4px solid ${wolfTheme.palette.primary.main}`,
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: wolfTheme.palette.primary.dark,
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        width: 32,
+                        height: 32,
+                        fontSize: 16,
+                        mr: 2,
+                      }}
+                    >
+                      {index + 1}
+                    </Avatar>
+                    <Typography variant="body1" fontWeight="medium">
+                      {player.username}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Box>
+  );
+};
+
+// Connection Status Component
+const EnhancedConnectionStatus = ({ status }) => {
+  let color;
+  let label;
+  let icon;
+  
+  switch (status) {
+    case 'connected':
+      color = wolfTheme.palette.success.main;
+      label = 'Connected';
+      icon = <SignalWifiStatusbar4Bar sx={{ color }} />;
+      break;
+    case 'connecting':
+      color = wolfTheme.palette.warning.main;
+      label = 'Reconnecting...';
+      icon = <SignalWifiStatusbarConnectedNoInternet4 sx={{ color, animation: 'pulse 1.5s infinite' }} />;
+      break;
+    case 'disconnected':
+      color = wolfTheme.palette.error.main;
+      label = 'Disconnected';
+      icon = <HighlightOff sx={{ color }} />;
+      break;
+    default:
+      color = wolfTheme.palette.text.disabled;
+      label = 'Unknown';
+      icon = <SignalWifiStatusbarConnectedNoInternet4 sx={{ color }} />;
+  }
+  
+  return (
+    <Chip 
+      icon={icon}
+      label={label}
+      sx={{ 
+        bgcolor: alpha(color, 0.15),
+        color,
+        fontWeight: 'bold',
+        borderColor: alpha(color, 0.3),
+        border: '1px solid',
+      }}
+      variant="outlined"
+    />
   );
 };
 
