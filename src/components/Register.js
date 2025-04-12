@@ -1,133 +1,207 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  TextField, 
-  Button, 
-  Box, 
-  Typography, 
-  Container, 
-  Paper, 
-  Alert, 
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Container,
+  Paper,
+  Alert,
   CircularProgress,
   ThemeProvider,
   createTheme,
-  alpha,
-  styled
+  CssBaseline,
+  InputAdornment,
+  IconButton,
+  Snackbar,
+  Backdrop,
+  Fade,
+  useMediaQuery
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
-import CelebrationIcon from '@mui/icons-material/Celebration';
-import BackgroundAnimation from './BackgroundAnimation';
-import CursorParticles from './CursorParticles';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import NightsStayIcon from '@mui/icons-material/NightsStay';
+import WolfSvg from '../animations/wolf-svg.svg'; // This would be a custom SVG component
 
-// Custom styled components
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  borderRadius: 16,
-  backgroundColor: alpha('#ffffff', 0.9),
-  backdropFilter: 'blur(8px)',
-  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.37)',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '5px',
-    background: 'linear-gradient(90deg, #FF9AA2, #FFB7B2, #FFDAC1, #E2F0CB, #B5EAD7, #C7CEEA)',
-    backgroundSize: '600% 600%',
-    animation: 'gradientAnimation 6s ease infinite',
-  },
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 12,
-    transition: 'transform 0.2s ease-in-out',
-    '&:hover': {
-      transform: 'translateY(-3px)',
-    },
-    '&.Mui-focused': {
-      transform: 'translateY(-3px)',
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: 2,
-      },
-    },
-  },
-}));
-
-const SubmitButton = styled(Button)(({ theme }) => ({
-  borderRadius: 12,
-  padding: '12px 24px',
-  fontSize: '1.1rem',
-  fontWeight: 'bold',
-  textTransform: 'none',
-  position: 'relative',
-  overflow: 'hidden',
-  background: 'linear-gradient(45deg, #FF6B6B 0%, #FFE66D 100%)',
-  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-  boxShadow: '0 4px 20px rgba(255, 107, 107, 0.4)',
-  '&:hover': {
-    background: 'linear-gradient(45deg, #FF5252 0%, #FFD700 100%)',
-    transform: 'translateY(-3px)',
-    boxShadow: '0 6px 25px rgba(255, 107, 107, 0.6)',
-  },
-}));
-
-// Create a custom theme
+// Create theme with dark wolf aesthetics
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#FF6B6B',
+      main: '#A8A4CE', // Soft purple/blue - moonlight color
+      light: '#C8B6E2',
+      dark: '#7A7BC7'
     },
     secondary: {
-      main: '#4ECDC4',
-    },
-    error: {
-      main: '#FF6B6B',
-    },
-    success: {
-      main: '#6BFF92',
+      main: '#483C67', // Deep purple - shadow color
+      light: '#6B5B95',
+      dark: '#2D2542'
     },
     background: {
-      default: '#F7FFF7',
+      default: '#13111C', // Very dark blue-black
+      paper: '#1D1A2F', // Dark purple-blue
     },
+    text: {
+      primary: '#E9E8FF', // Light lavender
+      secondary: '#A8A4CE', // Matches primary
+    },
+    error: {
+      main: '#FF6B6B', // Soft red
+    },
+    success: {
+      main: '#6BCB77', // Forest green
+    }
   },
   typography: {
-    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Quicksand", "Roboto", sans-serif',
     h2: {
       fontWeight: 700,
-      fontSize: '2.5rem',
-      background: 'linear-gradient(45deg, #FF6B6B, #6B66FF)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
+      letterSpacing: 3,
     },
+    h5: {
+      fontWeight: 600,
+      letterSpacing: 1,
+    },
+    button: {
+      fontWeight: 600,
+      letterSpacing: 1.2,
+    }
+  },
+  shape: {
+    borderRadius: 16
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: `
-        @keyframes gradientAnimation {
-          0% { background-position: 0% 50% }
-          50% { background-position: 100% 50% }
-          100% { background-position: 0% 50% }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        
         body {
-          background: linear-gradient(135deg, #D4C1EC, #C8B6E2, #BEA9FF);
-          background-size: 400% 400%;
-          animation: gradientAnimation 15s ease infinite;
+          background: radial-gradient(circle at 50% 0%, #2D2542, #13111C 70%);
           min-height: 100vh;
+          overflow-x: hidden;
+        }
+        
+        ::-webkit-scrollbar {
+          width: 8px;
+          background-color: #13111C;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background-color: #483C67;
+          border-radius: 10px;
         }
       `,
     },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            transition: 'all 0.3s ease',
+            '&.Mui-focused': {
+              boxShadow: '0 0 15px rgba(168, 164, 206, 0.3)',
+            },
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+          textTransform: 'none',
+          padding: '12px 24px',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
+            transform: 'translateY(-3px)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+        },
+      },
+    },
   },
 });
+
+// Moon backdrop component
+const MoonBackdrop = () => (
+  <Box
+    sx={{
+      position: 'absolute',
+      top: '-100px',
+      right: '-100px',
+      width: '300px',
+      height: '300px',
+      borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(200,182,226,0.2) 0%, rgba(168,164,206,0.1) 40%, rgba(29,26,47,0) 70%)',
+      filter: 'blur(20px)',
+      zIndex: 0,
+    }}
+  />
+);
+
+// Stars animation component
+const StarryBackground = () => {
+  const stars = Array(100).fill(0);
+  
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -1,
+        overflow: 'hidden',
+      }}
+    >
+      {stars.map((_, i) => {
+        const size = Math.random() * 2 + 1;
+        const opacity = Math.random() * 0.8 + 0.2;
+        const animationDuration = Math.random() * 3 + 2;
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        
+        return (
+          <Box
+            key={i}
+            component={motion.div}
+            animate={{
+              opacity: [opacity, opacity * 0.3, opacity],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: animationDuration,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            sx={{
+              position: 'absolute',
+              width: size,
+              height: size,
+              backgroundColor: '#E9E8FF',
+              borderRadius: '50%',
+              left: `${left}%`,
+              top: `${top}%`,
+            }}
+          />
+        );
+      })}
+    </Box>
+  );
+};
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -139,19 +213,11 @@ function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  // For bouncing animation
-  const [bounce, setBounce] = useState(false);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBounce(prev => !prev);
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -160,14 +226,26 @@ function Register() {
   };
 
   const validateForm = () => {
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    if (!formData.username.trim()) {
+      setError('Please enter a username');
       return false;
     }
+    
+    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long');
       return false;
     }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    
     return true;
   };
 
@@ -189,7 +267,7 @@ function Register() {
         password: formData.password
       });
       
-      setSuccess('Registration successful! Redirecting to login...');
+      setSuccess('Welcome to the pack! Redirecting to login...');
       
       // Redirect to login after successful registration
       setTimeout(() => {
@@ -202,55 +280,183 @@ function Register() {
     }
   };
 
-  const floatingAnimation = {
-    y: [0, -10, 0],
-    transition: {
-      duration: 2,
-      repeat: Infinity,
-      ease: "easeInOut"
+  const handleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 100 }
+    }
+  };
+  
+  // Form field styling
+  const inputSx = {
+    mb: 3,
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 3,
+      backgroundColor: 'rgba(29, 26, 47, 0.6)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(168, 164, 206, 0.2)',
+      transition: 'all 0.3s ease',
+      "&:hover": {
+        backgroundColor: 'rgba(29, 26, 47, 0.8)',
+        border: '1px solid rgba(168, 164, 206, 0.3)',
+      },
+      "&.Mui-focused": {
+        border: '1px solid rgba(168, 164, 206, 0.5)',
+        backgroundColor: 'rgba(29, 26, 47, 0.8)',
+      },
     }
   };
 
   return (
     <ThemeProvider theme={theme}>
-      <BackgroundAnimation />
-      <CursorParticles />
-      <Container maxWidth="xs" component={Box} sx={{ 
+      <CssBaseline />
+      <StarryBackground />
+      
+      <Container maxWidth="xs" sx={{ 
         minHeight: '100vh', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        position: 'relative', // Add this
-        zIndex: 1 
+        position: 'relative',
+        py: 4
       }}>
-        <motion.div
+        <Backdrop
+          sx={{ 
+            color: '#fff', 
+            zIndex: -1, 
+            position: 'fixed', 
+            background: 'radial-gradient(circle at center, rgba(72, 60, 103, 0.3) 0%, rgba(19, 17, 28, 0) 70%)'
+          }}
+          open={true}
+        />
+        
+        <Paper
+          component={motion.div}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{ width: '100%' }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          elevation={24}
+          sx={{
+            width: '100%',
+            background: 'linear-gradient(135deg, rgba(29, 26, 47, 0.8) 0%, rgba(19, 17, 28, 0.95) 100%)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 4,
+            overflow: 'hidden',
+            position: 'relative',
+            border: '1px solid rgba(168, 164, 206, 0.2)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          }}
         >
-          <StyledPaper elevation={6}>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              position: 'relative',
-              mb: 4,
-            }}>
-              <motion.div animate={bounce ? floatingAnimation : {}}>
-                <EmojiPeopleIcon color="primary" sx={{ fontSize: 60, mb: 1 }} />
-              </motion.div>
+          <MoonBackdrop />
+          
+          <Box sx={{ 
+            p: 4, 
+            position: 'relative', 
+            zIndex: 1
+          }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 1 }}
+            >
+              <Box sx={{ 
+                position: 'absolute', 
+                top: -30, 
+                right: -20,
+                transform: 'rotate(10deg)',
+                filter: 'drop-shadow(0 0 15px rgba(168, 164, 206, 0.5))'
+              }}>
+                <NightsStayIcon sx={{ fontSize: 50, color: theme.palette.primary.light }} />
+              </Box>
+            </motion.div>
+            
+            <Box component={motion.div}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                mb: 4
+              }}
+            >
+              <Box sx={{ 
+                width: 100, 
+                height: 100, 
+                mb: 2, 
+                filter: 'drop-shadow(0 0 10px rgba(168, 164, 206, 0.5))'
+              }}>
+                <motion.div
+                  animate={{ 
+                    y: [0, -5, 0],
+                    rotateZ: [0, 2, 0, -2, 0]
+                  }}
+                  transition={{ 
+                    duration: 6, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <Box sx={{ 
+                    width: 100, 
+                    height: 100,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <NightsStayIcon sx={{ fontSize: 100, color: theme.palette.primary.light }} />
+                  </Box>
+                </motion.div>
+              </Box>
               
-              <Typography component="h2" variant="h2">
-                Join the Fun!
+              <Typography 
+                component="h1" 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 700,
+                  background: 'linear-gradient(45deg, #E9E8FF, #A8A4CE)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '2px',
+                  textAlign: 'center',
+                  mb: 1
+                }}
+              >
+                JOIN THE PACK
               </Typography>
               
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 10, 0] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <CelebrationIcon color="secondary" sx={{ fontSize: 24, ml: 1 }} />
-              </motion.div>
+              <Typography variant="body1" sx={{ 
+                color: 'text.secondary',
+                textAlign: 'center',
+                mb: 3,
+                fontStyle: 'italic'
+              }}>
+                Where the night belongs to the wolves
+              </Typography>
             </Box>
             
             {error && (
@@ -264,12 +470,9 @@ function Register() {
                   sx={{ 
                     mb: 3, 
                     borderRadius: 2,
-                    animation: 'shake 0.5s ease-in-out',
-                    '@keyframes shake': {
-                      '0%, 100%': { transform: 'translateX(0)' },
-                      '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-5px)' },
-                      '20%, 40%, 60%, 80%': { transform: 'translateX(5px)' },
-                    }
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    color: '#FF6B6B',
+                    border: '1px solid rgba(255, 107, 107, 0.3)',
                   }}
                 >
                   {error}
@@ -288,7 +491,9 @@ function Register() {
                   sx={{ 
                     mb: 3, 
                     borderRadius: 2,
-                    animation: 'pulse 1.5s infinite'
+                    backgroundColor: 'rgba(107, 203, 119, 0.1)',
+                    color: '#6BCB77',
+                    border: '1px solid rgba(107, 203, 119, 0.3)',
                   }}
                 >
                   {success}
@@ -296,138 +501,217 @@ function Register() {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit}>
-              <StyledTextField
-                fullWidth
-                label="Username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                variant="outlined"
-                InputProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-                InputLabelProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-              />
+            <Box
+              component={motion.form}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              onSubmit={handleSubmit}
+            >
+              <Box component={motion.div} variants={itemVariants}>
+                <TextField
+                  fullWidth
+                  label="Username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonOutlineIcon sx={{ color: theme.palette.primary.main }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
 
-              <StyledTextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                variant="outlined"
-                InputProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-                InputLabelProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-              />
+              <Box component={motion.div} variants={itemVariants}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: theme.palette.primary.main }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
 
-              <StyledTextField
-                fullWidth
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                variant="outlined"
-                InputProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-                InputLabelProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-              />
+              <Box component={motion.div} variants={itemVariants}>
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: theme.palette.primary.main }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleShowPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Box>
 
-              <StyledTextField
-                fullWidth
-                label="Confirm Password"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                variant="outlined"
-                InputProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-                InputLabelProps={{
-                  sx: { fontSize: '1.1rem' }
-                }}
-              />
+              <Box component={motion.div} variants={itemVariants}>
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: theme.palette.primary.main }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleShowConfirmPassword}
+                          edge="end"
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Box>
 
-              <Box sx={{ position: 'relative', width: '100%', height: 50, mt: 2 }}>
-                <SubmitButton
+              <Box component={motion.div} variants={itemVariants}>
+                <Button
                   fullWidth
                   type="submit"
                   disabled={loading}
                   variant="contained"
-                  sx={{ height: '100%' }}
-                  endIcon={loading ? null : <LockOpenIcon />}
-                >
-                  {loading ? 'Creating Magic...' : 'Register Now!'}
-                </SubmitButton>
-                
-                {loading && (
-                  <CircularProgress
-                    size={24}
-                    sx={{
+                  sx={{
+                    mt: 2,
+                    mb: 3,
+                    py: 1.5,
+                    background: 'linear-gradient(45deg, #7A7BC7 0%, #A8A4CE 100%)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
                       position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      marginTop: '-12px',
-                      marginLeft: '-12px',
-                    }}
-                  />
-                )}
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                      transition: 'all 0.5s',
+                    },
+                    '&:hover::before': {
+                      left: '100%',
+                    },
+                  }}
+                >
+                  {loading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CircularProgress size={24} sx={{ color: '#E9E8FF', mr: 1 }} />
+                      <Typography variant="button">Joining...</Typography>
+                    </Box>
+                  ) : 'Join The Pack'}
+                </Button>
               </Box>
-            </form>
-
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Typography variant="body1">
-                  Already in the game?{' '}
-                  <Link 
-                    to="/login" 
-                    style={{ 
-                      textDecoration: 'none', 
-                      color: theme.palette.primary.main,
-                      fontWeight: 'bold',
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        width: '100%',
-                        height: '2px',
-                        bottom: 0,
-                        left: 0,
-                        background: theme.palette.primary.main,
-                        transform: 'scaleX(0)',
-                        transition: 'transform 0.3s ease'
-                      },
-                      '&:hover::after': {
-                        transform: 'scaleX(1)'
-                      }
-                    }}
-                  >
-                    Login here!
-                  </Link>
-                </Typography>
-              </motion.div>
             </Box>
-          </StyledPaper>
-        </motion.div>
+
+            <Box component={motion.div}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+              sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                Already with the pack?{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      width: '0%',
+                      height: '2px',
+                      bottom: '-3px',
+                      left: 0,
+                      backgroundColor: 'primary.main',
+                      transition: 'width 0.3s',
+                    },
+                    '&:hover::after': {
+                      width: '100%',
+                    },
+                  }}
+                  onClick={() => navigate('/login')}
+                >
+                  Return to your den
+                </Box>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+        
+        {/* Paw print particles */}
+        {!isMobile && Array(5).fill(0).map((_, i) => {
+          const size = Math.random() * 15 + 10;
+          const left = Math.random() * 100;
+          const top = Math.random() * 100;
+          const opacity = Math.random() * 0.2 + 0.05;
+          const rotation = Math.random() * 360;
+          
+          return (
+            <Box
+              key={i}
+              sx={{
+                position: 'fixed',
+                width: size,
+                height: size,
+                opacity,
+                transform: `rotate(${rotation}deg)`,
+                left: `${left}%`,
+                top: `${top}%`,
+                zIndex: -1,
+              }}
+            >
+              <svg viewBox="0 0 100 100" width="100%" height="100%">
+                <path fill="#A8A4CE" d="M65,10c-5.5,0-10,4.5-10,10s4.5,10,10,10s10-4.5,10-10S70.5,10,65,10z M35,10c-5.5,0-10,4.5-10,10s4.5,10,10,10s10-4.5,10-10 S40.5,10,35,10z M20,40c-5.5,0-10,4.5-10,10s4.5,10,10,10s10-4.5,10-10S25.5,40,20,40z M80,40c-5.5,0-10,4.5-10,10s4.5,10,10,10 s10-4.5,10-10S85.5,40,80,40z M50,50c-8.3,0-15,6.7-15,15s6.7,15,15,15s15-6.7,15-15S58.3,50,50,50z"/>
+              </svg>
+            </Box>
+          );
+        })}
       </Container>
     </ThemeProvider>
   );

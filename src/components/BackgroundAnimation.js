@@ -1,6 +1,3 @@
-// Add this to both your Login.js and Register.js files
-
-// First, create a BackgroundAnimation component
 import React, { useEffect, useRef } from 'react';
 
 const BackgroundAnimation = () => {
@@ -23,103 +20,166 @@ const BackgroundAnimation = () => {
     window.addEventListener('resize', handleResize);
     handleResize();
     
-    // Create floating elements
-    const elements = [];
-    const shapes = ['circle', 'triangle', 'square', 'star'];
-    const colors = ['#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#6B66FF', '#4ECDC4'];
+    // Wolf silhouette data
+    const wolfSilhouettes = [
+      // Wolf head silhouette path data
+      "M15,0 C18,2 20,5 21,8 C25,7 28,8 30,12 C31,15 30,18 28,20 C30,22 30,25 28,27 C25,29 21,29 18,27 C16,29 12,30 9,29 C5,27 3,24 2,20 C0,18 -1,14 0,10 C2,5 5,2 8,1 C10,0 13,-1 15,0",
+      // Wolf howling silhouette
+      "M10,25 C12,22 13,18 14,15 C15,12 16,8 15,5 C17,4 19,2 20,0 C21,3 23,5 25,6 C27,6 29,5 30,3 C31,6 30,9 28,11 C29,13 30,16 28,18 C26,20 24,20 22,19 C23,22 22,25 20,27 C18,29 15,30 12,29 C9,28 8,25 10,25",
+      // Running wolf silhouette
+      "M2,15 C5,13 8,12 10,10 C13,8 15,5 18,3 C20,2 23,1 25,2 C27,3 28,5 27,7 C25,9 22,10 20,11 C23,11 26,10 29,12 C31,14 32,17 30,19 C28,21 25,21 22,20 C25,22 27,25 26,28 C24,30 21,30 18,29 C15,28 13,25 10,23 C7,21 4,19 2,17 C1,16 1,16 2,15",
+    ];
     
-    for (let i = 0; i < 30; i++) {
-      elements.push({
+    // Create wolf elements
+    const wolves = [];
+    const colors = ['#1A1A2E', '#16213E', '#0F3460', '#252A34', '#28293E'];
+    
+    for (let i = 0; i < 15; i++) {
+      wolves.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 20 + 10,
-        speedX: (Math.random() - 0.5) * 1.5,
-        speedY: (Math.random() - 0.5) * 1.5,
+        scale: Math.random() * 1.5 + 0.5,
+        speedX: (Math.random() - 0.5) * 1,
+        speedY: (Math.random() - 0.5) * 1,
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.02,
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
+        rotationSpeed: (Math.random() - 0.5) * 0.01,
+        silhouette: wolfSilhouettes[Math.floor(Math.random() * wolfSilhouettes.length)],
         color: colors[Math.floor(Math.random() * colors.length)],
-        opacity: Math.random() * 0.5 + 0.1
+        opacity: Math.random() * 0.4 + 0.1
       });
     }
     
-    // Draw functions for different shapes
-    const drawShape = (ctx, element) => {
+    // Create stars/moon elements
+    const stars = [];
+    for (let i = 0; i < 50; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5,
+        opacity: Math.random() * 0.5 + 0.1,
+        twinkleSpeed: Math.random() * 0.02 + 0.01,
+        twinklePhase: Math.random() * Math.PI * 2
+      });
+    }
+    
+    // Moon
+    const moon = {
+      x: width * 0.8,
+      y: height * 0.2,
+      radius: Math.min(width, height) * 0.08,
+      opacity: 0.3
+    };
+    
+    // Draw wolf silhouette
+    const drawWolf = (ctx, wolf) => {
       ctx.save();
-      ctx.globalAlpha = element.opacity;
-      ctx.fillStyle = element.color;
-      ctx.translate(element.x, element.y);
-      ctx.rotate(element.rotation);
+      ctx.globalAlpha = wolf.opacity;
+      ctx.fillStyle = wolf.color;
+      ctx.translate(wolf.x, wolf.y);
+      ctx.rotate(wolf.rotation);
+      ctx.scale(wolf.scale, wolf.scale);
       
-      switch(element.shape) {
-        case 'circle':
-          ctx.beginPath();
-          ctx.arc(0, 0, element.size, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        case 'triangle':
-          ctx.beginPath();
-          ctx.moveTo(0, -element.size);
-          ctx.lineTo(element.size, element.size);
-          ctx.lineTo(-element.size, element.size);
-          ctx.closePath();
-          ctx.fill();
-          break;
-        case 'square':
-          ctx.fillRect(-element.size/2, -element.size/2, element.size, element.size);
-          break;
-        case 'star':
-          drawStar(ctx, 0, 0, 5, element.size/2, element.size);
-          break;
-        default:
-          ctx.fillRect(-element.size/2, -element.size/2, element.size, element.size);
-      }
+      const path = new Path2D(wolf.silhouette);
+      ctx.fill(path);
       
       ctx.restore();
     };
     
-    const drawStar = (ctx, cx, cy, spikes, innerRadius, outerRadius) => {
-      let rot = Math.PI / 2 * 3;
-      let x = cx;
-      let y = cy;
-      let step = Math.PI / spikes;
+    // Draw star
+    const drawStar = (ctx, star, time) => {
+      const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.3 + 0.7;
       
+      ctx.save();
+      ctx.fillStyle = '#E4E4E4';
+      ctx.globalAlpha = star.opacity * twinkle;
       ctx.beginPath();
-      ctx.moveTo(cx, cy - outerRadius);
-      
-      for(let i = 0; i < spikes; i++) {
-        x = cx + Math.cos(rot) * outerRadius;
-        y = cy + Math.sin(rot) * outerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-        
-        x = cx + Math.cos(rot) * innerRadius;
-        y = cy + Math.sin(rot) * innerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-      }
-      
-      ctx.lineTo(cx, cy - outerRadius);
-      ctx.closePath();
+      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    };
+    
+    // Draw moon
+    const drawMoon = (ctx, moon) => {
+      ctx.save();
+      
+      // Create gradient for moon glow
+      const gradient = ctx.createRadialGradient(
+        moon.x, moon.y, moon.radius * 0.5,
+        moon.x, moon.y, moon.radius * 2
+      );
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      
+      // Draw glow
+      ctx.globalAlpha = moon.opacity * 0.5;
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(moon.x, moon.y, moon.radius * 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw moon
+      ctx.globalAlpha = moon.opacity;
+      ctx.fillStyle = '#E4E4E4';
+      ctx.beginPath();
+      ctx.arc(moon.x, moon.y, moon.radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw moon craters
+      ctx.globalAlpha = moon.opacity * 0.15;
+      ctx.fillStyle = '#AAAAAA';
+      
+      // Add some craters
+      const craters = [
+        { x: moon.x - moon.radius * 0.3, y: moon.y - moon.radius * 0.2, r: moon.radius * 0.2 },
+        { x: moon.x + moon.radius * 0.4, y: moon.y + moon.radius * 0.3, r: moon.radius * 0.15 },
+        { x: moon.x - moon.radius * 0.1, y: moon.y + moon.radius * 0.4, r: moon.radius * 0.1 }
+      ];
+      
+      craters.forEach(crater => {
+        ctx.beginPath();
+        ctx.arc(crater.x, crater.y, crater.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      ctx.restore();
     };
     
     // Animation loop
+    let time = 0;
     const animate = () => {
-      ctx.clearRect(0, 0, width, height);
+      time += 0.01;
       
-      elements.forEach(element => {
+      // Create dark background with gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, '#08082B');
+      gradient.addColorStop(1, '#121212');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      // Draw stars
+      stars.forEach(star => {
+        drawStar(ctx, star, time);
+      });
+      
+      // Draw moon
+      drawMoon(ctx, moon);
+      
+      // Draw wolves
+      wolves.forEach(wolf => {
         // Update position
-        element.x += element.speedX;
-        element.y += element.speedY;
-        element.rotation += element.rotationSpeed;
+        wolf.x += wolf.speedX;
+        wolf.y += wolf.speedY;
+        wolf.rotation += wolf.rotationSpeed;
         
-        // Bounce off edges
-        if (element.x < 0 || element.x > width) element.speedX *= -1;
-        if (element.y < 0 || element.y > height) element.speedY *= -1;
+        // Wrap around edges instead of bouncing
+        if (wolf.x < -100) wolf.x = width + 100;
+        if (wolf.x > width + 100) wolf.x = -100;
+        if (wolf.y < -100) wolf.y = height + 100;
+        if (wolf.y > height + 100) wolf.y = -100;
         
-        // Draw the element
-        drawShape(ctx, element);
+        // Draw the wolf
+        drawWolf(ctx, wolf);
       });
       
       requestAnimationFrame(animate);

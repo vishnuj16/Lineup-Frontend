@@ -82,7 +82,7 @@ function App() {
 
   return (
     <Router>
-      <div className="app">
+      <div>
         <Routes>
           <Route 
             path="/login" 

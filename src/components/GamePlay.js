@@ -446,7 +446,7 @@ const ResultsDisplay = ({ wolfRanking, packRanking, packScore, question }) => {
             Round Results
           </Typography>
           <Chip 
-            label={`Pack Score: ${packScore}%`} 
+            label={`Pack Score: ${packScore} Pts`} 
             color="success"
             sx={{ fontWeight: 'bold', p: 0.5 }}
           />

@@ -751,3 +751,59 @@
       opacity: 1;
     }
   }
+
+  /* GamePlay.css - Wolf Theme Enhancements */
+
+/* Subtle paw print animation for dragging effect */
+.MuiCard-root {
+  position: relative;
+  overflow: hidden;
+}
+
+.MuiCard-root:active {
+  cursor: grabbing;
+}
+
+/* Wolf eyes glow effect on hover of positioned cards */
+.MuiPaper-root:hover .MuiSvgIcon-root {
+  filter: drop-shadow(0 0 3px #d0a85c);
+  transition: filter 0.3s ease;
+}
+
+/* Custom scrollbar for the containers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(38, 42, 53, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(110, 141, 175, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(208, 168, 92, 0.5);
+}
+
+/* Custom focus styles */
+.MuiPaper-root:focus-within {
+  outline: 2px solid #d0a85c;
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .ranking-container {
+    flex-direction: column;
+  }
+}
+
+/* Subtle paw print background effect for the wolf pack theme */
+.MuiBox-root {
+  position: relative;
+}

@@ -896,7 +896,7 @@ function GameLobby({ user, roomData, onLogout, onLeaveLobby }) {
                               p: 2, 
                               bgcolor: 'background.default',
                               height: '100%',
-                              borderRadius: 3
+                              borderRadius: 4,
                             }}
                           >
                             <Typography variant="subtitle2" color="text.secondary">Pack Name</Typography>
